@@ -1,0 +1,1086 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FIELDWISE: Train the Farm AI</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+
+    <!-- =========================
+         MAIN MENU
+    ========================== -->
+    <section id="main-menu" class="screen active">
+
+        <div class="menu-container">
+
+            <div class="logo-area">
+                <div class="system-label">[ UPLB SMART FARM // AI SYSTEM ]</div>
+                <h1>FIELDWISE</h1>
+                <p>TRAIN THE FARM AI</p>
+            </div>
+
+            <div class="player-panel">
+
+                <div class="player-info">
+                    <div>
+                        <span class="label">LEVEL</span>
+                        <span id="player-level">1</span>
+                    </div>
+
+                    <div>
+                        <span class="label">XP</span>
+                        <span id="player-xp">0</span>
+                    </div>
+
+                    <div>
+                        <span class="label">SCORE</span>
+                        <span id="player-score">0</span>
+                    </div>
+                </div>
+
+                <div class="xp-container">
+                    <div class="xp-text">
+                        <span>EXPERIENCE</span>
+                        <span id="xp-progress-text">0 / 500 XP</span>
+                    </div>
+
+                    <div class="xp-bar">
+                        <div id="xp-bar-fill"></div>
+                    </div>
+                </div>
+
+            </div>
+
+            <div class="menu-buttons">
+                <button class="main-button" onclick="showLevels()">
+                    START TRAINING
+                </button>
+
+                <button class="secondary-button" onclick="showAchievements()">
+                    ACHIEVEMENTS
+                </button>
+            </div>
+
+            <div class="system-status">
+                SYSTEM STATUS: <span>ONLINE</span>
+                <span class="field-status">FIELD STATUS: MONITORING</span>
+            </div>
+
+        </div>
+
+    </section>
+
+
+    <!-- =========================
+         BIAS LAB
+    ========================== -->
+    <section id="bias-lab" class="screen">
+        <div class="game-container">
+            <div class="game-hud">
+                <div class="hud-left">
+                    <button class="back-button" onclick="showLevels()">← EXIT</button>
+                    <div class="level-indicator"><span>LEVEL 07</span><strong>BIAS LAB</strong></div>
+                </div>
+                <div class="hud-stats">
+                    <div class="hud-stat"><span>ROUND</span><strong id="bias-round">1 / 3</strong></div>
+                    <div class="hud-stat"><span>SCORE</span><strong id="bias-score">0</strong></div>
+                </div>
+            </div>
+            <div class="round-progress">
+                <div class="progress-label"><span>DATA BALANCE</span><span id="bias-progress-text">33%</span></div>
+                <div class="round-bar"><div id="bias-progress-fill"></div></div>
+            </div>
+            <div class="game-card bias-card">
+                <div class="game-title">
+                    <div class="system-label">UPLB SMART FARM // BIAS LAB</div>
+                    <h2>CHECK THE DATA. CHALLENGE THE PATTERN.</h2>
+                    <p>When a condition is underrepresented in training data, the AI may perform worse on it. Find the imbalance, then add the missing samples.</p>
+                    <div class="level-goal"><strong>GOAL</strong><span>Identify UNBALANCED DATA, then add samples for the underrepresented condition in all 3 rounds.</span></div>
+                </div>
+                <div id="bias-case" class="bias-case"></div>
+                <div id="bias-question" class="game-message">WHAT IS CAUSING THE UNEVEN PERFORMANCE?</div>
+                <div id="bias-diagnosis-choices" class="bias-choices">
+                    <button class="secondary-button bias-choice" onclick="diagnoseBias('unbalanced')">UNBALANCED DATA</button>
+                    <button class="secondary-button bias-choice" onclick="diagnoseBias('accuracy')">LOW MODEL ACCURACY</button>
+                    <button class="secondary-button bias-choice" onclick="diagnoseBias('features')">NOT ENOUGH FEATURES</button>
+                </div>
+                <div id="bias-balance-controls" class="bias-balance-controls hidden">
+                    <div class="balance-add-title">ADD SAMPLES TO IMPROVE THE BALANCE</div>
+                    <button class="main-button" onclick="addBiasSamples()">+ ADD UNDERREPRESENTED SAMPLES</button>
+                    <div id="bias-balance-feedback" class="game-message">ADD THE MISSING GROUP</div>
+                </div>
+                <button id="next-bias-button" class="main-button hidden" onclick="nextBiasRound()">NEXT ROUND →</button>
+            </div>
+        </div>
+    </section>
+
+
+    <!-- =========================
+         BIAS LAB COMPLETE
+    ========================== -->
+    <section id="bias-lab-complete" class="screen">
+        <div class="completion-container">
+            <div class="system-label">TRAINING PROTOCOL COMPLETE</div>
+            <h1>BIAS LAB COMPLETE</h1>
+            <div class="completion-title">DATA REPRESENTATION CHECKED</div>
+            <div id="bias-completion-stars" class="stars">★ ★ ★</div>
+            <div class="results-panel">
+                <div class="result-row"><span>ROUNDS BALANCED</span><strong id="bias-completion-correct">0 / 3</strong></div>
+                <div class="result-row"><span>FINAL SCORE</span><strong id="bias-completion-score">0</strong></div>
+                <div class="result-row"><span>XP EARNED</span><strong id="bias-completion-xp">+0 XP</strong></div>
+            </div>
+            <div id="bias-completion-message" class="completion-message">Representation check complete.</div>
+            <div class="completion-buttons">
+                <button class="main-button" onclick="startBiasLab()">RETRY LEVEL</button>
+                <button class="secondary-button" onclick="showLevels()">LEVEL SELECT</button>
+            </div>
+        </div>
+    </section>
+
+    <!-- =========================
+         LEVEL SELECT
+    ========================== -->
+    <section id="level-select" class="screen">
+
+        <div class="screen-container">
+
+            <div class="screen-header">
+                <button class="back-button" onclick="showMainMenu()">← BACK</button>
+
+                <div>
+                    <div class="system-label">TRAINING DATABASE</div>
+                    <h2>SELECT TRAINING</h2>
+                </div>
+            </div>
+
+            <div class="level-grid">
+
+                <div class="level-card unlocked" onclick="startPatternHunter()">
+                    <div class="level-number">01</div>
+                    <div class="level-name">FIELD SCOUT</div>
+                    <div class="level-description">
+                        Inspect smart-farm observations and find the crop condition that does not fit the normal field pattern.
+                    </div>
+                    <div class="level-status">✓ UNLOCKED</div>
+                </div>
+
+                <div class="level-card unlocked" onclick="startDataBuilder()">
+                    <div class="level-number">02</div>
+                    <div class="level-name">DATA HARVEST</div>
+                    <div class="level-description">
+                        Prepare crop observations for the AI. Keep useful samples, fix labels, and remove unreliable field data.
+                    </div>
+                    <div class="level-status">✓ UNLOCKED</div>
+                </div>
+
+                <div class="level-card unlocked" onclick="startClassifier()">
+                    <div class="level-number">03</div>
+                    <div class="level-name">CROP CLASSIFIER</div>
+                    <div class="level-description">
+                        Learn classification by placing five unseen rice samples into HEALTHY or DISEASED categories using their features.
+                    </div>
+                    <div class="level-status">✓ UNLOCKED</div>
+                </div>
+
+                <div class="level-card unlocked" onclick="startProbabilityLevel()">
+                    <div class="level-number">04</div>
+                    <div class="level-name">PROBABILITY</div>
+                    <div class="level-description">
+                        Make predictions under uncertainty. AI uses probabilities to express confidence because real-world data rarely gives absolute certainty.
+                    </div>
+                    <div class="level-status">✓ UNLOCKED</div>
+                </div>
+
+                <div class="level-card unlocked" onclick="startModelBreaker()">
+                    <div class="level-number">05</div>
+                    <div class="level-name">MODEL BREAKER</div>
+                    <div class="level-description">
+                        Compare two crop models and spot the one that memorized its training field instead of learning a pattern for new fields.
+                    </div>
+                    <div class="level-status">✓ UNLOCKED</div>
+                </div>
+
+                <div class="level-card unlocked" onclick="startFarmOptimizer()">
+                    <div class="level-number">06</div>
+                    <div class="level-name">FARM OPTIMIZER</div>
+                    <div class="level-description">
+                        Allocate limited water, fertilizer, and workers to find the best crop yield without wasting the farm's resources.
+                    </div>
+                    <div class="level-status">✓ UNLOCKED</div>
+                </div>
+
+                <div class="level-card unlocked" onclick="startBiasLab()">
+                    <div class="level-number">07</div>
+                    <div class="level-name">BIAS LAB</div>
+                    <div class="level-description">
+                        Investigate how data and weights affect AI decisions. AI can inherit unfair patterns when its training data or rules are unbalanced.
+                    </div>
+                    <div class="level-status">✓ UNLOCKED</div>
+                </div>
+
+                <div class="level-card unlocked" onclick="startFinalTest()">
+                    <div class="level-number">08</div>
+                    <div class="level-name">FINAL TEST</div>
+                    <div class="level-description">
+                        Run the crop-monitoring pipeline from field observations to a responsible farm alert.
+                    </div>
+                    <div class="level-status">✓ UNLOCKED</div>
+                </div>
+
+            </div>
+
+        </div>
+
+    </section>
+
+
+    <!-- =========================
+         FINAL TEST
+    ========================== -->
+    <section id="final-test" class="screen">
+        <div class="game-container">
+            <div class="game-hud">
+                <div class="hud-left">
+                    <button class="back-button" onclick="showLevels()">← EXIT</button>
+                    <div class="level-indicator"><span>LEVEL 08</span><strong>FINAL TEST</strong></div>
+                </div>
+                <div class="hud-stats">
+                    <div class="hud-stat"><span>STAGE</span><strong id="final-stage">1 / 8</strong></div>
+                    <div class="hud-stat"><span>SCORE</span><strong id="final-score">0</strong></div>
+                </div>
+            </div>
+            <div class="round-progress">
+                <div class="progress-label"><span>PIPELINE PROGRESS</span><span id="final-progress-text">13%</span></div>
+                <div class="round-bar"><div id="final-progress-fill"></div></div>
+            </div>
+            <div class="game-card final-test-card">
+                <div class="game-title">
+                    <div class="system-label">UPLB SMART FARM // FINAL OPERATION</div>
+                    <h2>PUT THE PIPELINE TO WORK</h2>
+                    <p>Run one new batch of rice observations through the decisions you have learned. Good AI starts with good data.</p>
+                </div>
+                <div class="pipeline-strip">🌾 OBSERVE <span>→</span> 🧹 PREPARE <span>→</span> 🤖 CLASSIFY <span>→</span> 📊 CHECK <span>→</span> 🚨 ALERT</div>
+                <div id="final-stage-label" class="final-stage-label"></div>
+                <div id="final-stage-content" class="final-stage-content"></div>
+                <div id="final-stage-feedback" class="game-message">MAKE THE PIPELINE DECISION</div>
+                <div id="final-stage-actions" class="final-stage-actions"></div>
+                <button id="next-final-stage-button" class="main-button hidden" onclick="nextFinalStage()">NEXT STAGE →</button>
+            </div>
+        </div>
+    </section>
+
+
+    <!-- =========================
+         FINAL TEST COMPLETE
+    ========================== -->
+    <section id="final-test-complete" class="screen">
+        <div class="completion-container final-completion-container">
+            <div class="system-label">FIELDWISE OPERATION COMPLETE</div>
+            <h1>AI TRAINING COMPLETE</h1>
+            <div class="completion-title">FIELD ALERT READY</div>
+            <div id="final-completion-stars" class="stars">★ ★ ★</div>
+            <div class="final-pipeline-summary">
+                <div>🌾 CROP OBSERVATIONS <strong>✓ CHECKED</strong></div>
+                <div>🧹 CLEAN DATA <strong>✓ PREPARED</strong></div>
+                <div>🏷️ LABEL DATA <strong>✓ VERIFIED</strong></div>
+                <div>🤖 MODEL <strong>✓ CLASSIFIED</strong></div>
+                <div>📊 CONFIDENCE <strong>✓ CHECKED</strong></div>
+                <div>🧪 FIELD TEST <strong>✓ PASSED</strong></div>
+                <div>⚖️ DATA BALANCE <strong>✓ INVESTIGATED</strong></div>
+            </div>
+            <div class="final-alert-summary"><span>🚨 FIELD ALERT // RICE-07</span><strong>🦠 DISEASED</strong><small>CONFIDENCE: 89%</small></div>
+            <div class="final-good-ai">Good AI starts with good data.</div>
+            <div id="final-completion-message" class="completion-message">The crop-monitoring pipeline is ready for the farm.</div>
+            <div class="completion-buttons">
+                <button class="main-button" onclick="startFinalTest()">RETRY TEST</button>
+                <button class="secondary-button" onclick="showLevels()">LEVEL SELECT</button>
+            </div>
+        </div>
+    </section>
+
+
+    <!-- =========================
+         DATA HARVEST
+    ========================== -->
+    <section id="data-builder" class="screen">
+        <div class="game-container">
+            <div class="game-hud">
+                <div class="hud-left">
+                    <button class="back-button" onclick="showLevels()">← EXIT</button>
+                    <div class="level-indicator"><span>LEVEL 02</span><strong>DATA HARVEST</strong></div>
+                </div>
+                <div class="hud-stats">
+                    <div class="hud-stat"><span>SAMPLE</span><strong id="data-builder-round">1 / 8</strong></div>
+                    <div class="hud-stat"><span>SCORE</span><strong id="data-builder-score">0</strong></div>
+                </div>
+            </div>
+            <div class="round-progress">
+                <div class="progress-label"><span>DATASET HEALTH</span><span id="data-builder-progress-text">0%</span></div>
+                <div class="round-bar"><div id="data-builder-progress-fill"></div></div>
+            </div>
+            <div class="game-card data-builder-card">
+                <div class="game-title">
+                    <div class="system-label">UPLB SMART FARM // DATA HARVEST</div>
+                    <h2>PREPARE THE CROP DATASET</h2>
+                    <p>The AI must detect whether a crop is HEALTHY or DISEASED. Inspect each observation before you teach it.</p>
+                </div>
+                <div class="dataset-dashboard">
+                    <div class="dataset-dashboard-title"><span>DATASET STATUS</span><strong id="data-builder-health">0%</strong></div>
+                    <div class="dataset-stats">
+                        <span>SAMPLES <strong id="data-builder-processed">0 / 8</strong></span>
+                        <span>HEALTHY <strong id="data-builder-good">0</strong></span>
+                        <span>DISEASED <strong id="data-builder-defective">0</strong></span>
+                        <span>RELABELLED <strong id="data-builder-relabeled">0</strong></span>
+                        <span>REMOVED <strong id="data-builder-removed">0</strong></span>
+                    </div>
+                    <div id="data-builder-health-message" class="dataset-health-message">INSPECT THE FIRST SAMPLE</div>
+                </div>
+                <div id="data-builder-sample" class="data-sample"></div>
+                <div class="data-action-buttons">
+                    <button class="main-button data-action-choice" onclick="processDataSample('keep')">KEEP</button>
+                    <button class="secondary-button data-action-choice remove-action" onclick="processDataSample('remove')">REMOVE</button>
+                    <button class="secondary-button data-action-choice relabel-action" onclick="processDataSample('relabel')">RELABEL</button>
+                </div>
+                <div id="data-builder-feedback" class="game-message">CHOOSE WHAT TO DO WITH THIS EXAMPLE</div>
+                <button id="next-data-builder-button" class="main-button hidden" onclick="nextDataSample()">NEXT SAMPLE →</button>
+            </div>
+        </div>
+    </section>
+
+
+    <!-- =========================
+         MODEL BREAKER
+    ========================== -->
+    <section id="model-breaker" class="screen">
+        <div class="game-container">
+            <div class="game-hud">
+                <div class="hud-left">
+                    <button class="back-button" onclick="showLevels()">← EXIT</button>
+                    <div class="level-indicator"><span>LEVEL 05</span><strong>MODEL BREAKER</strong></div>
+                </div>
+                <div class="hud-stats">
+                    <div class="hud-stat"><span>ROUND</span><strong id="model-breaker-round">1 / 5</strong></div>
+                    <div class="hud-stat"><span>SCORE</span><strong id="model-breaker-score">0</strong></div>
+                </div>
+            </div>
+            <div class="round-progress">
+                <div class="progress-label"><span>FIELD TEST PROGRESS</span><span id="model-breaker-progress-text">20%</span></div>
+                <div class="round-bar"><div id="model-breaker-progress-fill"></div></div>
+            </div>
+            <div class="game-card model-breaker-card">
+                <div class="game-title">
+                    <div class="system-label">UPLB SMART FARM // MODEL CHECK</div>
+                    <h2>DID THE AI LEARN THE FIELD?</h2>
+                    <p>Compare each model's training-field accuracy with its new-field accuracy. Choose the model that learned a useful pattern.</p>
+                </div>
+                <div id="model-breaker-case" class="model-case"></div>
+                <div id="model-breaker-choices" class="diagnosis-choices"></div>
+                <div id="model-breaker-feedback" class="game-message">COMPARE THE TWO MODELS</div>
+                <button id="next-model-breaker-button" class="main-button hidden" onclick="nextModelBreakerCase()">NEXT ROUND →</button>
+            </div>
+        </div>
+    </section>
+
+
+    <!-- =========================
+         DATA BUILDER COMPLETE
+    ========================== -->
+    <section id="data-builder-complete" class="screen">
+        <div class="completion-container">
+            <div class="system-label">TRAINING PROTOCOL COMPLETE</div>
+            <h1>DATA HARVEST COMPLETE</h1>
+            <div class="completion-title">TRAINING READY</div>
+            <div id="data-builder-completion-stars" class="stars">★ ★ ★</div>
+            <div class="results-panel">
+                <div class="result-row"><span>SAMPLES KEPT</span><strong id="data-builder-completion-kept">0</strong></div>
+                <div class="result-row"><span>SAMPLES RELABELLED</span><strong id="data-builder-completion-relabeled">0</strong></div>
+                <div class="result-row"><span>LABEL ERRORS LEFT</span><strong id="data-builder-completion-errors">0</strong></div>
+                <div class="result-row"><span>DATASET HEALTH</span><strong id="data-builder-completion-health">0%</strong></div>
+                <div class="result-row"><span>FINAL SCORE</span><strong id="data-builder-completion-score">0</strong></div>
+                <div class="result-row"><span>XP EARNED</span><strong id="data-builder-completion-xp">+0 XP</strong></div>
+            </div>
+            <div id="data-builder-completion-message" class="completion-message">Your dataset is ready for training.</div>
+            <div id="data-builder-training-panel" class="training-panel hidden">
+                <strong>AI MODEL</strong>
+                <span id="data-builder-training-status">READY TO TRAIN</span>
+                <div class="training-bar"><div id="data-builder-training-fill"></div></div>
+                <div id="data-builder-training-detail">The model will learn from the examples you kept.</div>
+            </div>
+            <div class="completion-buttons">
+                <button class="main-button" onclick="startDataBuilder()">RETRY LEVEL</button>
+                <button id="train-data-model-button" class="main-button" onclick="trainDataModel()">TRAIN MODEL →</button>
+                <button class="secondary-button" onclick="showLevels()">LEVEL SELECT</button>
+            </div>
+        </div>
+    </section>
+
+
+    <!-- =========================
+         PATTERN HUNTER
+    ========================== -->
+    <section id="pattern-hunter" class="screen">
+
+        <div class="game-container">
+
+            <!-- GAME HUD -->
+            <div class="game-hud">
+
+                <div class="hud-left">
+                    <button class="back-button" onclick="showLevels()">← EXIT</button>
+
+                    <div class="level-indicator">
+                        <span>LEVEL 01</span>
+                        <strong>FIELD SCOUT</strong>
+                    </div>
+                </div>
+
+                <div class="hud-stats">
+
+                    <div class="hud-stat">
+                        <span>ROUND</span>
+                        <strong id="round-number">1 / 5</strong>
+                    </div>
+
+                    <div class="hud-stat">
+                        <span>SCORE</span>
+                        <strong id="game-score">0</strong>
+                    </div>
+
+                </div>
+
+            </div>
+
+
+            <!-- PROGRESS -->
+            <div class="round-progress">
+
+                <div class="progress-label">
+                    <span>TRAINING PROGRESS</span>
+                    <span id="round-progress-text">20%</span>
+                </div>
+
+                <div class="round-bar">
+                    <div id="round-bar-fill"></div>
+                </div>
+
+            </div>
+
+
+            <!-- GAME CONTENT -->
+            <div class="game-card">
+
+                <div class="game-title">
+                    <div class="system-label">UPLB SMART FARM // TRAINING SECTOR 01</div>
+
+                    <h2>DETECT THE ABNORMAL CROP</h2>
+
+                    <p>
+                        The farm's sensor network has collected today's crop data.
+                        Most observations follow a normal pattern. One does not. Find it.
+                    </p>
+                </div>
+
+                <div id="field-scenario" class="field-scenario"></div>
+
+                <div id="pattern-grid" class="pattern-grid"></div>
+
+
+                <div id="game-message" class="game-message">
+                    FIND THE OBSERVATION THAT DOES NOT FIT
+                </div>
+
+                <div id="field-concept" class="field-concept hidden">
+                    <strong>AI CONCEPT UNLOCKED: ANOMALY DETECTION</strong>
+                    <span>Finding observations that significantly differ from normal patterns.</span>
+                </div>
+
+
+                <button id="next-pattern-button"
+                        class="main-button hidden"
+                        onclick="nextPattern()">
+                    NEXT ROUND →
+                </button>
+
+            </div>
+
+        </div>
+
+    </section>
+
+
+    <!-- =========================
+         CLASSIFIER
+    ========================== -->
+    <section id="classifier" class="screen">
+
+        <div class="game-container">
+
+            <div class="game-hud">
+
+                <div class="hud-left">
+                    <button class="back-button" onclick="showLevels()">← EXIT</button>
+
+                    <div class="level-indicator">
+                        <span>LEVEL 03</span>
+                        <strong>CROP CLASSIFIER</strong>
+                    </div>
+                </div>
+
+                <div class="hud-stats">
+
+                    <div class="hud-stat">
+                        <span>ROUND</span>
+                        <strong id="classifier-round-number">1 / 3</strong>
+                    </div>
+
+                    <div class="hud-stat">
+                        <span>SCORE</span>
+                        <strong id="classifier-score">0</strong>
+                    </div>
+
+                </div>
+
+            </div>
+
+            <div class="round-progress">
+
+                <div class="progress-label">
+                    <span>CLASSIFICATION PROGRESS</span>
+                    <span id="classifier-progress-text">33%</span>
+                </div>
+
+                <div class="round-bar">
+                    <div id="classifier-progress-fill"></div>
+                </div>
+
+            </div>
+
+            <div class="game-card classifier-card">
+
+                <div class="game-title">
+                    <div class="system-label">UPLB SMART FARM // CROP CLASSIFIER</div>
+                    <h2>CLASSIFY THE CROP</h2>
+                    <p>Look at the features and place this unseen rice sample into a category: HEALTHY or DISEASED.</p>
+                </div>
+
+                <div class="diagnosis-header">
+                    <span>FIELD LOS BAÑOS-04</span>
+                    <strong id="classifier-sample-name">RICE SAMPLE #018</strong>
+                    <span>NEW SAMPLE</span>
+                </div>
+
+                <div id="classifier-observation" class="classifier-observation"></div>
+
+                <div class="fieldwise-panel">
+                    <div class="fieldwise-heading"><span>AI PREDICTION</span><strong>FIELDWISE</strong></div>
+                    <div class="prediction-bars">
+                        <div class="prediction-bar-row"><span>HEALTHY</span><div><i id="classifier-healthy-bar"></i></div><strong id="classifier-healthy-value">0%</strong></div>
+                        <div class="prediction-bar-row"><span>DISEASED</span><div><i id="classifier-diseased-bar"></i></div><strong id="classifier-diseased-value">0%</strong></div>
+                    </div>
+                    <div class="model-prediction"><span>🤖 PREDICTION</span><strong id="classifier-prediction">--</strong><small>CONFIDENCE <b id="classifier-confidence">0%</b></small></div>
+                </div>
+
+                <div class="classifier-controls">
+                    <button class="main-button classifier-choice" data-classification="HEALTHY" onclick="submitClassifier('HEALTHY')">HEALTHY</button>
+                    <button class="secondary-button classifier-choice disease-choice" data-classification="DISEASED" onclick="submitClassifier('DISEASED')">DISEASED</button>
+                </div>
+
+                <div id="classifier-feedback" class="game-message">
+                    CHOOSE A CROP CATEGORY
+                </div>
+
+                <div id="classifier-nearest" class="nearest-data hidden"></div>
+
+                <button id="next-classifier-button"
+                        class="main-button hidden"
+                        onclick="nextClassifierRound()">
+                    NEXT SAMPLE →
+                </button>
+
+            </div>
+
+        </div>
+
+    </section>
+
+
+    <!-- =========================
+         PROBABILITY
+    ========================== -->
+    <section id="probability-level" class="screen">
+
+        <div class="game-container">
+
+            <div class="game-hud">
+
+                <div class="hud-left">
+                    <button class="back-button" onclick="showLevels()">← EXIT</button>
+
+                    <div class="level-indicator">
+                        <span>LEVEL 04</span>
+                        <strong>PROBABILITY</strong>
+                    </div>
+                </div>
+
+                <div class="hud-stats">
+
+                    <div class="hud-stat">
+                        <span>ROUND</span>
+                        <strong id="probability-round">1 / 5</strong>
+                    </div>
+
+                    <div class="hud-stat">
+                        <span>ACCURACY</span>
+                        <strong id="probability-accuracy">0%</strong>
+                    </div>
+
+                </div>
+
+            </div>
+
+            <div class="round-progress">
+
+                <div class="progress-label">
+                    <span>AI MODEL CONFIDENCE</span>
+                    <span id="probability-confidence-label">0%</span>
+                </div>
+
+                <div class="round-bar">
+                    <div id="probability-confidence-bar"></div>
+                </div>
+
+            </div>
+
+            <div class="game-card probability-card">
+
+                <div class="game-title">
+                    <div class="system-label">UPLB SMART FARM // PROBABILITY</div>
+                    <h2>HOW CERTAIN IS THE AI?</h2>
+                    <p class="probability-instructions">
+                        Classification tells you what the AI predicts. Probability tells you how confident it is. Read the two percentages and choose HIGH, MEDIUM, or LOW confidence.
+                    </p>
+                </div>
+
+                <div id="probability-scenario-text" class="probability-scenario">🌾 RICE SAMPLE #01</div>
+
+                <div id="probability-observation" class="probability-observation"></div>
+
+                <div class="confidence-panel">
+                    <div class="confidence-row"><span>HEALTHY</span><strong id="probability-healthy-value">0%</strong></div>
+                    <div class="confidence-track"><i id="probability-healthy-bar"></i></div>
+                    <div class="confidence-row"><span>DISEASED</span><strong id="probability-diseased-value">0%</strong></div>
+                    <div class="confidence-track"><i id="probability-diseased-bar"></i></div>
+                </div>
+
+                <div class="probability-buttons">
+                    <button class="main-button probability-choice" data-confidence="high" onclick="evaluateProbability('high')">HIGH</button>
+                    <button class="secondary-button probability-choice" data-confidence="medium" onclick="evaluateProbability('medium')">MEDIUM</button>
+                    <button class="secondary-button probability-choice" data-confidence="low" onclick="evaluateProbability('low')">LOW</button>
+                </div>
+
+                <div id="probability-feedback" class="game-message">
+                    READ THE PROBABILITY GAP
+                </div>
+
+                <button id="next-probability-button"
+                        class="main-button hidden"
+                        onclick="nextProbabilityRound()">
+                    NEXT SAMPLE →
+                </button>
+
+            </div>
+
+        </div>
+
+    </section>
+
+
+    <!-- =========================
+         OPTIMIZER
+    ========================== -->
+    <section id="optimizer" class="screen">
+
+        <div class="game-container">
+
+            <div class="game-hud">
+                <div class="hud-left">
+                    <button class="back-button" onclick="showLevels()">← EXIT</button>
+
+                    <div class="level-indicator">
+                        <span>LEVEL 06</span>
+                        <strong>FARM OPTIMIZER</strong>
+                    </div>
+                </div>
+
+                <div class="hud-stats">
+                    <div class="hud-stat">
+                        <span>ROUND</span>
+                        <strong id="optimizer-round">1 / 3</strong>
+                    </div>
+
+                    <div class="hud-stat">
+                        <span>SCORE</span>
+                        <strong id="optimizer-score">0</strong>
+                    </div>
+                </div>
+            </div>
+
+            <div class="round-progress">
+                <div class="progress-label">
+                    <span>RESOURCE ALLOCATION</span>
+                    <span id="optimizer-progress-text">33%</span>
+                </div>
+                <div class="round-bar">
+                    <div id="optimizer-progress-fill"></div>
+                </div>
+            </div>
+
+            <div class="game-card optimizer-card">
+                <div class="game-title">
+                    <div class="system-label">UPLB SMART FARM // RESOURCE ALLOCATION</div>
+                    <h2>MAKE THE MOST OF THE FARM</h2>
+                    <p class="optimizer-instructions">
+                        Allocate limited resources to a rice field. Find a strong crop yield without simply using the most of everything.
+                    </p>
+                    <div class="level-goal"><strong>GOAL</strong><span>Reach at least 80% crop yield in each round while staying within the available resources.</span></div>
+                </div>
+
+                <div id="opt-task-desc" class="optimizer-task">Choose water, fertilizer, and workers for this field.</div>
+                <div class="farm-resources"><span>💧 WATER <strong>10</strong></span><span>🌱 FERTILIZER <strong>6</strong></span><span>👩‍🌾 WORKERS <strong>4</strong></span></div>
+
+                <div class="optimizer-controls">
+                    <label class="farm-resource-row" for="farm-water">
+                        <span>WATER <strong id="farm-water-value">5</strong> / 10</span>
+                        <input type="range" id="farm-water" min="0" max="10" value="5" oninput="updateFarmYield()">
+                    </label>
+                    <label class="farm-resource-row" for="farm-fertilizer">
+                        <span>FERTILIZER <strong id="farm-fertilizer-value">3</strong> / 6</span>
+                        <input type="range" id="farm-fertilizer" min="0" max="6" value="3" oninput="updateFarmYield()">
+                    </label>
+                    <label class="farm-resource-row" for="farm-workers">
+                        <span>WORKERS <strong id="farm-workers-value">2</strong> / 4</span>
+                        <input type="range" id="farm-workers" min="0" max="4" value="2" oninput="updateFarmYield()">
+                    </label>
+                </div>
+
+                <div class="optimizer-meters">
+                    <div class="optimizer-meter">
+                        <div class="meter-label"><span>EXPECTED CROP YIELD</span><strong id="farm-yield-value">0%</strong></div>
+                        <div class="meter-track"><div id="opt-energy-bar" class="meter-fill energy-fill"></div></div>
+                    </div>
+                    <div class="optimizer-meter">
+                        <div class="meter-label"><span>RESOURCE USE</span><strong id="farm-use-value">0 / 20</strong></div>
+                        <div class="meter-track"><div id="opt-output-bar" class="meter-fill output-fill"></div></div>
+                    </div>
+                </div>
+
+                <div id="opt-warning" class="optimizer-warning" aria-live="polite"></div>
+
+                <div class="optimizer-actions">
+                    <button id="btn-run-opt" class="main-button" onclick="submitFarmAllocation()">GROW CROP</button>
+                </div>
+
+                <div id="optimizer-feedback" class="game-message">FIND A VALID HIGH-SCORE CONFIGURATION</div>
+
+                <div id="optimizer-comparison" class="optimizer-comparison hidden"></div>
+            </div>
+        </div>
+    </section>
+
+
+    <!-- =========================
+         MODEL BREAKER COMPLETE
+    ========================== -->
+    <section id="model-breaker-complete" class="screen">
+        <div class="completion-container">
+            <div class="system-label">TRAINING PROTOCOL COMPLETE</div>
+            <h1>MODEL BREAKER COMPLETE</h1>
+            <div class="completion-title">GENERALIZATION CHECKED</div>
+            <div id="model-breaker-completion-stars" class="stars">★ ★ ★</div>
+            <div class="results-panel">
+                <div class="result-row"><span>MODELS TESTED</span><strong>5</strong></div>
+                <div class="result-row"><span>CORRECT CHOICES</span><strong id="model-breaker-completion-accuracy">0 / 5</strong></div>
+                <div class="result-row"><span>FINAL SCORE</span><strong id="model-breaker-completion-score">0</strong></div>
+                <div class="result-row"><span>XP EARNED</span><strong id="model-breaker-completion-xp">+0 XP</strong></div>
+            </div>
+            <div id="model-breaker-completion-message" class="completion-message">Model diagnostics complete.</div>
+            <div class="completion-buttons">
+                <button class="main-button" onclick="startModelBreaker()">RETRY LEVEL</button>
+                <button class="secondary-button" onclick="showLevels()">LEVEL SELECT</button>
+            </div>
+        </div>
+    </section>
+
+
+    <!-- =========================
+         OPTIMIZER COMPLETE
+    ========================== -->
+    <section id="optimizer-complete" class="screen">
+        <div class="completion-container">
+            <div class="system-label">TRAINING PROTOCOL COMPLETE</div>
+            <h1>FARM OPTIMIZER COMPLETE</h1>
+            <div class="completion-title">RESOURCE TRADE-OFFS</div>
+            <div id="optimizer-completion-stars" class="stars">★ ★ ★</div>
+
+            <div class="results-panel">
+                <div class="result-row"><span>VALID ROUNDS</span><strong id="optimizer-valid-rounds">0 / 3</strong></div>
+                <div class="result-row"><span>BEST OUTPUT</span><strong id="optimizer-best-score">0</strong></div>
+                <div class="result-row"><span>XP EARNED</span><strong id="optimizer-completion-xp">+0 XP</strong></div>
+            </div>
+
+            <div id="optimizer-completion-message" class="completion-message">Optimization training complete.</div>
+
+            <div class="completion-buttons">
+                <button class="main-button" onclick="startFarmOptimizer()">RETRY LEVEL</button>
+                <button class="secondary-button" onclick="showLevels()">LEVEL SELECT</button>
+            </div>
+        </div>
+    </section>
+
+
+    <!-- =========================
+         PROBABILITY COMPLETE
+    ========================== -->
+    <section id="probability-complete" class="screen">
+
+        <div class="completion-container">
+
+            <div class="system-label">TRAINING PROTOCOL COMPLETE</div>
+
+            <h1>PROBABILITY COMPLETE</h1>
+
+            <div class="completion-title">
+                AI CONFIDENCE
+            </div>
+
+            <div id="probability-completion-stars" class="stars">
+                ★ ★ ★
+            </div>
+
+            <div class="results-panel">
+
+                <div class="result-row">
+                    <span>SAMPLES ANALYZED</span>
+                    <strong id="probability-expected-wins">0 / 5</strong>
+                </div>
+
+                <div class="result-row">
+                    <span>CORRECT CONFIDENCE READS</span>
+                    <strong id="probability-actual-wins">0 / 5</strong>
+                </div>
+
+                <div class="result-row">
+                    <span>HIGH / MEDIUM / LOW</span>
+                    <strong id="probability-calibration">0 / 0 / 0</strong>
+                </div>
+
+            </div>
+
+            <div id="probability-completion-message" class="completion-message">
+                Probability model evaluated.
+            </div>
+
+            <div class="completion-buttons">
+
+                <button class="main-button" onclick="startProbabilityLevel()">
+                    RETRY LEVEL
+                </button>
+
+                <button class="secondary-button" onclick="showLevels()">
+                    LEVEL SELECT
+                </button>
+
+            </div>
+
+        </div>
+
+    </section>
+
+
+    <!-- =========================
+         CROP CLASSIFIER COMPLETE
+    ========================== -->
+    <section id="classifier-complete" class="screen">
+
+        <div class="completion-container">
+
+            <div class="system-label">TRAINING PROTOCOL COMPLETE</div>
+
+            <h1>CROP CLASSIFIER COMPLETE</h1>
+
+            <div class="completion-title">
+                CLASSIFICATION READY
+            </div>
+
+            <div id="classifier-completion-stars" class="stars">
+                ★ ★ ★
+            </div>
+
+            <div class="results-panel">
+
+                <div class="result-row">
+                    <span>ACCURACY</span>
+                    <strong id="classifier-completion-accuracy">100%</strong>
+                </div>
+
+
+                <div class="result-row">
+                    <span>FINAL SCORE</span>
+                    <strong id="classifier-completion-score">0</strong>
+                </div>
+
+                <div class="result-row">
+                    <span>XP EARNED</span>
+                    <strong id="classifier-completion-xp">+0 XP</strong>
+                </div>
+
+            </div>
+
+            <div id="classifier-completion-message" class="completion-message">
+                Classification model training complete.
+            </div>
+
+            <div class="completion-buttons">
+
+                <button class="main-button" onclick="startClassifier()">
+                    RETRY LEVEL
+                </button>
+
+                <button class="secondary-button" onclick="showLevels()">
+                    LEVEL SELECT
+                </button>
+
+            </div>
+
+        </div>
+
+    </section>
+
+
+    <!-- =========================
+         LEVEL COMPLETE
+    ========================== -->
+    <section id="level-complete" class="screen">
+
+        <div class="completion-container">
+
+            <div class="system-label">TRAINING PROTOCOL COMPLETE</div>
+
+            <h1>LEVEL COMPLETE</h1>
+
+            <div class="completion-title">
+                FIELD SCOUT
+            </div>
+
+            <div id="completion-stars" class="stars">
+                ★ ★ ★
+            </div>
+
+            <div class="results-panel">
+
+                <div class="result-row">
+                    <span>ACCURACY</span>
+                    <strong id="completion-accuracy">100%</strong>
+                </div>
+
+                <div class="result-row">
+                    <span>FINAL SCORE</span>
+                    <strong id="completion-score">0</strong>
+                </div>
+
+                <div class="result-row">
+                    <span>XP EARNED</span>
+                    <strong id="completion-xp">+0 XP</strong>
+                </div>
+
+            </div>
+
+            <div id="completion-message" class="completion-message">
+                Training data successfully processed.
+            </div>
+
+            <div class="completion-buttons">
+
+                <button class="main-button" onclick="startPatternHunter()">
+                    RETRY LEVEL
+                </button>
+
+                <button class="secondary-button" onclick="showLevels()">
+                    LEVEL SELECT
+                </button>
+
+            </div>
+
+        </div>
+
+    </section>
+
+
+    <!-- =========================
+         ACHIEVEMENTS
+    ========================== -->
+    <section id="achievements" class="screen">
+
+        <div class="screen-container">
+
+            <div class="screen-header">
+
+                <button class="back-button" onclick="showMainMenu()">
+                    ← BACK
+                </button>
+
+                <div>
+                    <div class="system-label">ACHIEVEMENT DATABASE</div>
+                    <h2>ACHIEVEMENTS</h2>
+                </div>
+
+            </div>
+
+            <div class="achievement-grid">
+
+                <div class="achievement-card locked-achievement">
+                    <div class="achievement-icon">◈</div>
+                    <div>
+                        <h3>PATTERN SCOUT</h3>
+                        <p>Complete Pattern Hunter.</p>
+                    </div>
+                </div>
+
+                <div class="achievement-card locked-achievement">
+                    <div class="achievement-icon">◆</div>
+                    <div>
+                        <h3>PERFECT VISION</h3>
+                        <p>Complete a level with perfect accuracy.</p>
+                    </div>
+                </div>
+
+                <div class="achievement-card locked-achievement">
+                    <div class="achievement-icon">⚡</div>
+                    <div>
+                        <h3>SPEED DEMON</h3>
+                        <p>Complete a training protocol quickly.</p>
+                    </div>
+                </div>
+
+                <div class="achievement-card locked-achievement">
+                    <div class="achievement-icon">◇</div>
+                    <div>
+                        <h3>DATA DETECTIVE</h3>
+                        <p>Investigate an unusual dataset.</p>
+                    </div>
+                </div>
+
+            </div>
+
+        </div>
+
+    </section>
+
+
+    <script src="script.js"></script>
+
+</body>
+</html>
