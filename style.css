@@ -2212,8 +2212,7 @@ button {
         font-size: 0.62rem;
     }
 
-    .bias-case,
-    .bias-balance-controls {
+    .bias-case {
         width: 100%;
         padding: 14px 12px;
     }
@@ -2499,8 +2498,7 @@ button {
     margin: 18px 0;
 }
 
-.bias-bars span,
-.bias-performance span {
+.bias-bars span {
     display: flex;
     justify-content: space-between;
     gap: 10px;
@@ -2509,8 +2507,7 @@ button {
     letter-spacing: 0.08em;
 }
 
-.bias-bars b,
-.bias-performance b {
+.bias-bars b {
     color: var(--text);
 }
 
@@ -2525,13 +2522,6 @@ button {
     background: var(--warning);
 }
 
-.bias-performance {
-    display: grid;
-    gap: 8px;
-    padding-top: 14px;
-    border-top: 1px solid var(--line);
-}
-
 .bias-choices {
     display: flex;
     justify-content: center;
@@ -2543,23 +2533,6 @@ button {
     min-width: 170px;
 }
 
-.bias-balance-controls {
-    display: grid;
-    gap: 12px;
-    width: min(100%, 620px);
-    margin: 18px auto;
-    padding: 16px;
-    border: 1px solid rgba(230, 189, 90, 0.35);
-    border-radius: 14px;
-    background: rgba(230, 189, 90, 0.08);
-}
-
-.balance-add-title {
-    color: var(--warning);
-    font-size: 0.7rem;
-    font-weight: 800;
-    letter-spacing: 0.12em;
-}
 
 .final-test-card {
     min-height: 620px;
@@ -2702,4 +2675,476 @@ button {
     font-size: 1rem;
     font-weight: 800;
     letter-spacing: 0.08em;
+}
+
+/* =========================================================
+   BIAS LAB // FIX THE FARM
+   Built on the existing tokens: --accent, --warning, --line,
+   --success, --danger, --muted. No new palette.
+   ========================================================= */
+
+.bias-phase {
+    display: grid;
+    justify-items: center;
+    width: 100%;
+}
+
+.bias-phase.hidden {
+    display: none;
+}
+
+.bias-steps {
+    display: flex;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 6px;
+    width: min(100%, 700px);
+    margin: 18px auto 20px;
+}
+
+.bias-steps span {
+    padding: 6px 12px;
+    border: 1px solid var(--line);
+    border-radius: 999px;
+    color: var(--muted);
+    font-size: 0.6rem;
+    font-weight: 800;
+    letter-spacing: 0.12em;
+    opacity: 0.5;
+    transition: all 0.25s ease;
+}
+
+.bias-steps span.done {
+    color: var(--success);
+    border-color: rgba(114, 214, 154, 0.4);
+    opacity: 0.9;
+}
+
+.bias-steps span.active {
+    color: var(--bg-dark);
+    background: var(--accent);
+    border-color: var(--accent);
+    opacity: 1;
+}
+
+.bias-panel-title {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+    width: min(100%, 700px);
+    margin: 6px auto 14px;
+    color: var(--accent);
+    font-size: 0.68rem;
+    font-weight: 800;
+    letter-spacing: 0.14em;
+}
+
+.bias-panel-title b {
+    padding: 3px 10px;
+    border-radius: 999px;
+    background: rgba(230, 189, 90, 0.14);
+    color: var(--warning);
+    font-size: 0.62rem;
+}
+
+/* ---- FIELD TEST ---- */
+.bias-test-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 10px;
+    width: min(100%, 700px);
+    margin: 0 auto 16px;
+}
+
+.bias-test-case {
+    display: grid;
+    gap: 5px;
+    padding: 12px;
+    border: 1px solid var(--line);
+    border-left: 3px solid var(--success);
+    border-radius: 12px;
+    background: rgba(38, 59, 40, 0.72);
+    text-align: left;
+    animation: messageFloat 0.3s ease backwards;
+}
+
+.bias-test-case.miss {
+    border-left-color: var(--danger);
+    background: rgba(232, 117, 104, 0.1);
+}
+
+.bias-test-cond {
+    color: var(--text);
+    font-size: 0.72rem;
+    font-weight: 800;
+    letter-spacing: 0.06em;
+}
+
+.bias-test-meta {
+    color: var(--muted);
+    font-size: 0.62rem;
+    letter-spacing: 0.08em;
+}
+
+.bias-test-row {
+    display: flex;
+    justify-content: space-between;
+    gap: 8px;
+    padding-top: 4px;
+    border-top: 1px solid var(--line);
+}
+
+.bias-test-row i {
+    color: var(--muted);
+    font-style: normal;
+    font-size: 0.58rem;
+    letter-spacing: 0.1em;
+}
+
+.bias-test-row b {
+    color: var(--text);
+    font-size: 0.64rem;
+    letter-spacing: 0.06em;
+}
+
+.bias-test-verdict {
+    color: var(--success);
+    font-size: 0.62rem;
+    font-weight: 800;
+    letter-spacing: 0.1em;
+}
+
+.bias-test-case.miss .bias-test-verdict {
+    color: var(--danger);
+}
+
+/* ---- DATA SCANNER ---- */
+.bias-scanner {
+    width: min(100%, 700px);
+    margin: 0 auto 14px;
+    padding: 16px;
+    border: 1px solid var(--line);
+    border-radius: 16px;
+    background: rgba(38, 59, 40, 0.72);
+}
+
+.bias-scan-buttons {
+    display: flex;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-bottom: 14px;
+}
+
+.bias-scan {
+    min-width: 160px;
+}
+
+.bias-scan.selected {
+    border-color: var(--accent);
+    color: var(--accent);
+}
+
+.bias-scan-output {
+    padding: 14px;
+    border: 1px dashed var(--line);
+    border-radius: 12px;
+    color: var(--muted);
+    font-size: 0.66rem;
+    letter-spacing: 0.08em;
+    line-height: 1.7;
+    text-align: left;
+}
+
+.bias-scan-output.has-data {
+    border-style: solid;
+    border-color: rgba(139, 211, 168, 0.35);
+}
+
+.bias-scan-output strong {
+    display: block;
+    margin-bottom: 10px;
+    color: var(--accent);
+    letter-spacing: 0.12em;
+}
+
+.bias-scan-output em {
+    display: block;
+    margin-top: 10px;
+    color: var(--warning);
+    font-style: normal;
+    font-weight: 800;
+    letter-spacing: 0.1em;
+}
+
+.bias-scan-output.neutral em {
+    color: var(--muted);
+    font-weight: 600;
+}
+
+.bias-phase-actions {
+    display: flex;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 12px;
+}
+
+/* ---- DIAGNOSE ---- */
+.bias-choice.wrong {
+    border-color: var(--danger);
+    color: var(--danger);
+}
+
+/* ---- DATA LAB ---- */
+.bias-budget {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+    width: min(100%, 700px);
+    margin: 0 auto 14px;
+    padding: 10px 14px;
+    border: 1px solid rgba(230, 189, 90, 0.35);
+    border-radius: 12px;
+    background: rgba(230, 189, 90, 0.08);
+}
+
+.bias-budget-label,
+.bias-budget-count {
+    color: var(--warning);
+    font-size: 0.64rem;
+    font-weight: 800;
+    letter-spacing: 0.12em;
+}
+
+.bias-budget-chips {
+    display: flex;
+    gap: 5px;
+}
+
+.bias-budget-chips i {
+    width: 16px;
+    height: 16px;
+    border-radius: 4px;
+    background: var(--success);
+    transition: background 0.2s ease;
+}
+
+.bias-budget-chips i.spent {
+    background: rgba(241, 243, 220, 0.16);
+}
+
+.bias-allocator {
+    display: grid;
+    gap: 8px;
+    width: min(100%, 700px);
+    margin: 0 auto 8px;
+}
+
+.bias-alloc-row {
+    display: grid;
+    grid-template-columns: minmax(110px, 1.4fr) minmax(60px, 2fr) auto auto auto;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 12px;
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    background: rgba(38, 59, 40, 0.72);
+    text-align: left;
+}
+
+.bias-alloc-row.weak {
+    border-color: rgba(230, 189, 90, 0.45);
+    background: rgba(230, 189, 90, 0.08);
+}
+
+.bias-alloc-label {
+    color: var(--text);
+    font-size: 0.66rem;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+}
+
+.bias-alloc-bar {
+    display: block;
+    height: 10px;
+    border-radius: 999px;
+    background: rgba(241, 243, 220, 0.1);
+    overflow: hidden;
+}
+
+.bias-alloc-bar i {
+    display: block;
+    height: 100%;
+    border-radius: 999px;
+    background: var(--accent);
+    transition: width 0.3s ease;
+}
+
+.bias-alloc-count {
+    min-width: 46px;
+    color: var(--text);
+    font-size: 0.7rem;
+    font-weight: 800;
+    text-align: right;
+}
+
+.bias-alloc-count em {
+    color: var(--success);
+    font-style: normal;
+    font-size: 0.62rem;
+}
+
+.bias-alloc-acc {
+    min-width: 46px;
+    font-size: 0.7rem;
+    font-weight: 800;
+    letter-spacing: 0.04em;
+    text-align: right;
+}
+
+.bias-alloc-acc.ok {
+    color: var(--success);
+}
+
+.bias-alloc-acc.low {
+    color: var(--warning);
+}
+
+.bias-alloc-controls {
+    display: flex;
+    gap: 6px;
+}
+
+.bias-step-button {
+    width: 30px;
+    height: 30px;
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    background: rgba(10, 24, 17, 0.8);
+    color: var(--text);
+    font-size: 0.9rem;
+    font-weight: 800;
+    cursor: pointer;
+    transition: all 0.18s ease;
+}
+
+.bias-step-button:hover:not(:disabled) {
+    border-color: var(--accent);
+    color: var(--accent);
+    transform: translateY(-1px);
+}
+
+.bias-step-button:disabled {
+    opacity: 0.32;
+    cursor: not-allowed;
+}
+
+/* ---- RESULT ---- */
+.bias-result-compare {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+    gap: 12px;
+    width: min(100%, 700px);
+    margin: 0 auto 18px;
+}
+
+.bias-compare-col {
+    padding: 14px;
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    background: rgba(38, 59, 40, 0.72);
+    text-align: left;
+}
+
+.bias-compare-col strong {
+    display: block;
+    margin-bottom: 10px;
+    color: var(--accent);
+    font-size: 0.64rem;
+    letter-spacing: 0.14em;
+}
+
+.bias-compare-col span {
+    display: flex;
+    justify-content: space-between;
+    gap: 10px;
+    margin-top: 8px;
+    color: var(--muted);
+    font-size: 0.64rem;
+    letter-spacing: 0.06em;
+}
+
+.bias-compare-col span b {
+    color: var(--text);
+}
+
+.bias-compare-col i {
+    display: block;
+    height: 9px;
+    margin-top: 4px;
+    border-radius: 999px;
+    background: var(--accent);
+    transition: width 0.4s ease;
+}
+
+.bias-compare-col i.minority-bar {
+    background: var(--warning);
+}
+
+.bias-concept {
+    width: min(100%, 700px);
+    margin: 0 auto 18px;
+    padding: 14px 16px;
+    border-left: 3px solid var(--accent-2);
+    background: rgba(214, 168, 79, 0.09);
+    text-align: left;
+}
+
+.bias-concept strong {
+    display: block;
+    margin-bottom: 6px;
+    color: var(--accent-2);
+    font-size: 0.64rem;
+    letter-spacing: 0.14em;
+}
+
+.bias-concept p {
+    margin: 0;
+    color: var(--muted);
+    font-size: 0.76rem;
+    line-height: 1.65;
+}
+
+@media (max-width: 640px) {
+    .bias-steps span {
+        padding: 5px 9px;
+        font-size: 0.52rem;
+        letter-spacing: 0.08em;
+    }
+
+    .bias-test-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .bias-alloc-row {
+        grid-template-columns: 1fr auto auto;
+        grid-template-areas:
+            "label count acc"
+            "bar   ctrl  ctrl";
+        row-gap: 8px;
+    }
+
+    .bias-alloc-label { grid-area: label; }
+    .bias-alloc-bar { grid-area: bar; align-self: center; }
+    .bias-alloc-count { grid-area: count; }
+    .bias-alloc-acc { grid-area: acc; }
+    .bias-alloc-controls { grid-area: ctrl; justify-content: flex-end; }
+
+    .bias-scan {
+        min-width: 100%;
+    }
 }

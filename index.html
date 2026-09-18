@@ -90,33 +90,81 @@
                 </div>
             </div>
             <div class="round-progress">
-                <div class="progress-label"><span>DATA BALANCE</span><span id="bias-progress-text">33%</span></div>
+                <div class="progress-label"><span>LEVEL PROGRESS</span><span id="bias-progress-text">33%</span></div>
                 <div class="round-bar"><div id="bias-progress-fill"></div></div>
             </div>
             <div class="game-card bias-card">
                 <div class="game-title">
                     <div class="system-label">UPLB SMART FARM // BIAS LAB</div>
-                    <h2>CHECK THE DATA. CHALLENGE THE PATTERN.</h2>
-                    <p>When a condition is underrepresented in training data, the AI may perform worse on it. Find the imbalance, then add the missing samples.</p>
-                    <div class="level-goal"><strong>GOAL</strong><span>Identify UNBALANCED DATA, then add samples for the underrepresented condition in all 3 rounds.</span></div>
+                    <h2>FIX THE FARM</h2>
+                    <p id="bias-brief">The crop AI was trained on last season's field photos. It is live on the farm and something is going wrong.</p>
+                    <div class="level-goal"><strong>GOAL</strong><span id="bias-goal">Run the field test, scan the dataset, find the group the AI barely learned, then spend your sample budget on it.</span></div>
                 </div>
-                <div id="bias-case" class="bias-case"></div>
-                <div id="bias-question" class="game-message">WHAT IS CAUSING THE UNEVEN PERFORMANCE?</div>
-                <div id="bias-diagnosis-choices" class="bias-choices">
-                    <button class="secondary-button bias-choice" onclick="diagnoseBias('unbalanced')">UNBALANCED DATA</button>
-                    <button class="secondary-button bias-choice" onclick="diagnoseBias('accuracy')">LOW MODEL ACCURACY</button>
-                    <button class="secondary-button bias-choice" onclick="diagnoseBias('features')">NOT ENOUGH FEATURES</button>
+
+                <div class="bias-steps">
+                    <span id="bias-step-test">FIELD TEST</span>
+                    <span id="bias-step-investigate">INVESTIGATE</span>
+                    <span id="bias-step-diagnose">DIAGNOSE</span>
+                    <span id="bias-step-repair">REPAIR</span>
+                    <span id="bias-step-result">RETRAIN</span>
                 </div>
-                <div id="bias-balance-controls" class="bias-balance-controls hidden">
-                    <div class="balance-add-title">ADD SAMPLES TO IMPROVE THE BALANCE</div>
-                    <button class="main-button" onclick="addBiasSamples()">+ ADD UNDERREPRESENTED SAMPLES</button>
-                    <div id="bias-balance-feedback" class="game-message">ADD THE MISSING GROUP</div>
+
+                <!-- PHASE 1 // FIELD TEST -->
+                <div id="bias-phase-test" class="bias-phase">
+                    <div class="bias-panel-title">FIELD TEST — THE AI IN THE FIELD</div>
+                    <div id="bias-test-grid" class="bias-test-grid"></div>
+                    <div class="game-message">WHERE IS IT GOING WRONG? LOOK FOR A PATTERN IN THE MISTAKES.</div>
+                    <button class="main-button" onclick="goToBiasInvestigate()">INVESTIGATE →</button>
                 </div>
-                <button id="next-bias-button" class="main-button hidden" onclick="nextBiasRound()">NEXT ROUND →</button>
+
+                <!-- PHASE 2 // DATA SCANNER -->
+                <div id="bias-phase-investigate" class="bias-phase hidden">
+                    <div class="bias-scanner">
+                        <div class="bias-panel-title">🔍 DATA SCANNER <b id="bias-scans-left">2 SCANS LEFT</b></div>
+                        <div class="bias-scan-buttons">
+                            <button class="secondary-button bias-scan" data-scan="performance" onclick="runBiasScan('performance')">MODEL PERFORMANCE</button>
+                            <button class="secondary-button bias-scan" data-scan="distribution" onclick="runBiasScan('distribution')">DATA DISTRIBUTION</button>
+                            <button class="secondary-button bias-scan" data-scan="features" onclick="runBiasScan('features')">FEATURES</button>
+                        </div>
+                        <div id="bias-scan-output" class="bias-scan-output">NO SCAN RUN YET. YOU HAVE LIMITED SCANS — PICK THE ONES THAT ACTUALLY ANSWER THE QUESTION.</div>
+                    </div>
+                    <div id="bias-deploy-report" class="game-message"></div>
+                    <div class="bias-phase-actions">
+                        <button class="main-button" onclick="goToBiasDiagnosis()">CONTINUE TO DIAGNOSIS →</button>
+                        <button class="secondary-button" onclick="deployBiasModelEarly()">DEPLOY AS-IS</button>
+                    </div>
+                </div>
+
+                <!-- PHASE 3 // DIAGNOSE -->
+                <div id="bias-phase-diagnose" class="bias-phase hidden">
+                    <div class="bias-panel-title">WHICH GROUP DID THE AI LEARN TOO LITTLE ABOUT?</div>
+                    <div id="bias-diagnosis-choices" class="bias-choices"></div>
+                    <div id="bias-diagnosis-feedback" class="game-message"></div>
+                    <button id="bias-to-repair" class="main-button hidden" onclick="goToBiasRepair()">OPEN DATA LAB →</button>
+                </div>
+
+                <!-- PHASE 4 // DATA LAB -->
+                <div id="bias-phase-repair" class="bias-phase hidden">
+                    <div class="bias-panel-title">DATA LAB — SPEND YOUR SAMPLE BUDGET</div>
+                    <div id="bias-budget" class="bias-budget"></div>
+                    <div id="bias-allocator" class="bias-allocator"></div>
+                    <div id="bias-repair-hint" class="game-message"></div>
+                    <button id="bias-retrain" class="main-button" onclick="retrainBiasModel()">RETRAIN MODEL</button>
+                </div>
+
+                <!-- PHASE 5 // RETRAIN RESULT -->
+                <div id="bias-phase-result" class="bias-phase hidden">
+                    <div class="bias-panel-title">RETRAINED MODEL — BEFORE VS AFTER</div>
+                    <div id="bias-result-compare" class="bias-result-compare"></div>
+                    <div class="bias-panel-title">SAME FIELD TEST, RETRAINED MODEL</div>
+                    <div id="bias-retest-grid" class="bias-test-grid"></div>
+                    <div id="bias-result-message" class="game-message"></div>
+                    <div id="bias-concept" class="bias-concept"></div>
+                    <button id="next-bias-button" class="main-button" onclick="nextBiasRound()">NEXT ROUND →</button>
+                </div>
             </div>
         </div>
     </section>
-
 
     <!-- =========================
          BIAS LAB COMPLETE
@@ -745,7 +793,7 @@
                     <p class="optimizer-instructions">
                         Allocate limited resources to a rice field. Find a strong crop yield without simply using the most of everything.
                     </p>
-                    <div class="level-goal"><strong>GOAL</strong><span>Reach at least 80% crop yield in each round while staying within the available resources.</span></div>
+                    <div class="level-goal"><strong>GOAL</strong><span>Reach at 100% crop yield in each round while staying within the available resources.</span></div>
                 </div>
 
                 <div id="opt-task-desc" class="optimizer-task">Choose water, fertilizer, and workers for this field.</div>
