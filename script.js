@@ -163,11 +163,183 @@ function addXP(amount) {
 
 
 /* =========================================================
+   ACHIEVEMENT SYSTEM
+   ========================================================= */
+
+const SPEED_DEMON_SECONDS = 45;
+let patternStartTime = 0;
+
+const achievementsUnlocked = {};
+const ACHIEVEMENT_NAMES = {
+    "pattern-scout": "PATTERN SCOUT",
+    "perfect-vision": "PERFECT VISION",
+    "speed-demon": "SPEED DEMON",
+    "data-detective": "DATA DETECTIVE"
+};
+
+function unlockAchievement(id) {
+
+    if (achievementsUnlocked[id]) return;
+    achievementsUnlocked[id] = true;
+
+    const card = document.querySelector(`[data-achievement="${id}"]`);
+
+    if (card) {
+        card.classList.remove("locked-achievement");
+        card.classList.add("unlocked-achievement");
+    }
+
+    showAchievementToast(ACHIEVEMENT_NAMES[id] || id);
+}
+
+function showAchievementToast(name) {
+
+    const toast = document.createElement("div");
+    toast.className = "achievement-toast";
+    toast.textContent = `ACHIEVEMENT UNLOCKED: ${name}`;
+    document.body.appendChild(toast);
+
+    setTimeout(() => toast.remove(), 3200);
+}
+
+
+/* =========================================================
+   STORY SYSTEM
+   Juan's story: each chapter shows once per session, right
+   before its level starts. Retries skip it, and SKIP STORY
+   turns it off for the rest of the session.
+   ========================================================= */
+
+let storyEnabled = true;
+let storyPending = null;
+const storySeen = {};
+
+const STORY = {
+    pattern: {
+        chapter: "CHAPTER 1 // MEET JUAN",
+        portraits: "\uD83D\uDC68\u200D\uD83C\uDF3E",
+        title: "Juan's Rice Field",
+        text: [
+            "Juan has farmed rice and corn in Los Ba\u00F1os, Laguna for most of his life. He knows his fields by sight, but he cannot be everywhere at once.",
+            "Last season a sick patch spread for days before anyone noticed. The UPLB Smart Farm team has put sensors in his field, and you are the new trainee who will teach the farm AI to help him."
+        ],
+        mission: "The sensors send hundreds of readings. Teach the AI to spot the one that does not fit the normal pattern. This is called anomaly detection."
+    },
+    data: {
+        chapter: "CHAPTER 2 // JUAN'S NOTEBOOKS",
+        portraits: "\uD83D\uDC68\u200D\uD83C\uDF3E \uD83D\uDCD3",
+        title: "Messy Records",
+        text: [
+            "Juan hands you his field notebooks and sensor logs. Some entries are missing, some were written wrong, and some were copied twice.",
+            "An AI learns from whatever it is given, so messy data teaches it messy habits."
+        ],
+        mission: "Inspect each record. Keep the useful ones, fix the wrong labels, and remove the unreliable ones."
+    },
+    classifier: {
+        chapter: "CHAPTER 3 // HEALTHY OR DISEASED?",
+        portraits: "\uD83D\uDC68\u200D\uD83C\uDF3E \uD83C\uDF3E",
+        title: "Teaching the AI to Decide",
+        text: [
+            "With clean records, the AI can finally learn. Juan brings new rice samples from his field that it has never seen before."
+        ],
+        mission: "Look at each sample's features (moisture, humidity, leaf spots) and place it in HEALTHY or DISEASED, the way the AI will."
+    },
+    probability: {
+        chapter: "CHAPTER 4 // HOW SURE IS IT?",
+        portraits: "\uD83D\uDC68\u200D\uD83C\uDF3E \uD83E\uDD14",
+        title: "A 51% Guess Is Not a 95% Guess",
+        text: [
+            "Juan asks the question that matters most: how sure is it? Spraying a healthy field wastes money, but ignoring a sick one costs even more.",
+            "The AI answers with probabilities, and the gap between them tells him how much to trust it."
+        ],
+        mission: "Read the two percentages and decide whether the AI is HIGH, MEDIUM, or LOW confidence."
+    },
+    modelBreaker: {
+        chapter: "CHAPTER 5 // WILL IT WORK ON NEW FIELDS?",
+        portraits: "\uD83D\uDC68\u200D\uD83C\uDF3E \uD83E\uDDD3",
+        title: "The Neighbor's Field",
+        text: [
+            "The AI scored very well on Juan's field. Then his neighbor, Mang Tonyo, asks if it will work on his fields too.",
+            "A model can score high by memorizing its training field instead of learning a real pattern."
+        ],
+        mission: "Compare each model's training accuracy with its accuracy on a new field, and pick the one that learned something useful."
+    },
+    optimizer: {
+        chapter: "CHAPTER 6 // LIMITED RESOURCES",
+        portraits: "\uD83D\uDC68\u200D\uD83C\uDF3E \uD83D\uDCA7",
+        title: "More Is Not Always Better",
+        text: [
+            "Juan has limited water, fertilizer, and helpers this season. Using the most of everything wastes money and can even hurt the crop."
+        ],
+        mission: "Allocate water, fertilizer, and workers to get a strong yield while staying within the limits."
+    },
+    bias: {
+        chapter: "CHAPTER 7 // WHO DID THE AI MISS?",
+        portraits: "\uD83D\uDC68\u200D\uD83C\uDF3E \uD83D\uDC69\u200D\uD83C\uDF3E",
+        title: "Aling Rosa's Plot",
+        text: [
+            "The AI works well for Juan's sunny field. But Aling Rosa, whose plot stays wet in the rainy season, says it keeps giving her wrong advice.",
+            "The AI was trained mostly on sunny-weather data, so it barely learned what a wet field looks like. Nobody meant to leave her out, but the data did."
+        ],
+        mission: "Run the field test, scan the dataset, find the group the AI barely learned, then spend your sample budget to repair it."
+    },
+    final: {
+        chapter: "CHAPTER 8 // THE FIELD ALERT",
+        portraits: "\uD83D\uDC68\u200D\uD83C\uDF3E \uD83D\uDC69\u200D\uD83C\uDF3E \uD83E\uDDD3",
+        title: "One Alert for Everyone",
+        text: [
+            "Juan, Aling Rosa, and Mang Tonyo will all get alerts from the same system. Everything you learned now goes into one pipeline, from messy readings to a warning in their hands."
+        ],
+        mission: "Make a decision at each stage of the pipeline. At the end, set the alert threshold, keeping in mind what each mistake costs a farmer."
+    }
+};
+
+/* Returns true when a story card was shown; the caller should stop. */
+function storyGate(key, startFn) {
+
+    const beat = STORY[key];
+    if (!storyEnabled || storySeen[key] || !beat) return false;
+
+    storySeen[key] = true;
+    storyPending = startFn;
+
+    document.getElementById("story-chapter").textContent = beat.chapter;
+    document.getElementById("story-portraits").textContent = beat.portraits;
+    document.getElementById("story-title").textContent = beat.title;
+    document.getElementById("story-text").innerHTML = beat.text.map(line => `<p>${line}</p>`).join("");
+    document.getElementById("story-mission").textContent = beat.mission;
+
+    showScreen("story");
+    return true;
+}
+
+function continueStory() {
+
+    const next = storyPending;
+    storyPending = null;
+    if (next) next();
+}
+
+function skipStory() {
+
+    storyEnabled = false;
+    continueStory();
+}
+
+function showEpilogue() {
+
+    showScreen("epilogue");
+}
+
+
+/* =========================================================
    PATTERN HUNTER
    ========================================================= */
 
 function startPatternHunter() {
+    if (storyGate("pattern", startPatternHunter)) return;
 
+    patternStartTime = performance.now();
     currentRound = 1;
     correctAnswers = 0;
     roundScore = 0;
@@ -321,6 +493,11 @@ function completePatternHunter() {
 
     addXP(bonusXP);
 
+    unlockAchievement("pattern-scout");
+    if (accuracy === 100) unlockAchievement("perfect-vision");
+    const patternSeconds = (performance.now() - patternStartTime) / 1000;
+    if (accuracy >= 80 && patternSeconds <= SPEED_DEMON_SECONDS) unlockAchievement("speed-demon");
+
     let stars = "★";
 
     if (accuracy >= 80) {
@@ -387,6 +564,7 @@ function resetDataBuilderState() {
 }
 
 function startDataBuilder() {
+    if (storyGate("data", startDataBuilder)) return;
     dataBuilderRound = 1;
     dataBuilderScore = 0;
     dataBuilderLocked = false;
@@ -615,6 +793,7 @@ function buildClassifierRoundCases() {
 }
 
 function startClassifier() {
+    if (storyGate("classifier", startClassifier)) return;
     classifierRound = 1;
     classifierScore = 0;
     classifierCorrectAnswers = 0;
@@ -716,6 +895,7 @@ function nextClassifierRound() {
 
 function completeClassifier() {
     const accuracy = Math.round((classifierCorrectAnswers / CLASSIFIER_ROUNDS) * 100);
+    if (accuracy === 100) unlockAchievement("perfect-vision");
     const bonusXP = accuracy === 100 ? 250 : accuracy >= 80 ? 150 : accuracy >= 60 ? 75 : 0;
 
     addXP(bonusXP);
@@ -794,6 +974,7 @@ let modelBreakerCorrect = 0;
 let modelBreakerLocked = false;
 
 function startModelBreaker() {
+    if (storyGate("modelBreaker", startModelBreaker)) return;
     modelBreakerRound = 1;
     modelBreakerScore = 0;
     modelBreakerCorrect = 0;
@@ -889,6 +1070,7 @@ function nextModelBreakerCase() {
 
 function completeModelBreaker() {
     const accuracy = Math.round((modelBreakerCorrect / MODEL_BREAKER_TOTAL_CASES) * 100);
+    if (accuracy === 100) unlockAchievement("perfect-vision");
     const bonusXP = accuracy === 100 ? 250 : accuracy >= 80 ? 150 : accuracy >= 60 ? 75 : 0;
     addXP(bonusXP);
 
@@ -1224,6 +1406,7 @@ function buildProbabilityRoundCases() {
 }
 
 function startProbabilityLevel() {
+    if (storyGate("probability", startProbabilityLevel)) return;
     probabilityRound = 1;
     probabilityCorrectReads = 0;
     probabilityBandCounts = { high: 0, medium: 0, low: 0 };
@@ -1301,6 +1484,7 @@ function nextProbabilityRound() {
 
 function completeProbabilityLevel() {
     const accuracy = Math.round((probabilityCorrectReads / PROBABILITY_TOTAL_ROUNDS) * 100);
+    if (accuracy === 100) unlockAchievement("perfect-vision");
     const bonusXP = accuracy === 100 ? 250 : accuracy >= 80 ? 150 : accuracy >= 60 ? 75 : 0;
     addXP(bonusXP);
 
@@ -1337,6 +1521,7 @@ let farmOptimizerSuccessful = 0;
 let farmOptimizerLocked = false;
 
 function startFarmOptimizer() {
+    if (storyGate("optimizer", startFarmOptimizer)) return;
     farmOptimizerRound = 1;
     farmOptimizerScore = 0;
     farmOptimizerSuccessful = 0;
@@ -1461,7 +1646,7 @@ function biasAccuracy(count) {
 
 const BIAS_ROUNDS = [
     {
-        brief: "The crop AI was trained on last season's field photos. It is live on the farm and something is going wrong.",
+        brief: "Juan's crop AI works well on his sunny field, but Aling Rosa says it keeps getting her wet-season crops wrong. It was trained on last season's field photos, and something is going wrong.",
         goal: "Run the field test, scan the dataset, find the group the AI barely learned, then spend your sample budget on it.",
         groupHeading: "WEATHER CONDITION",
         budget: 6,
@@ -1482,7 +1667,7 @@ const BIAS_ROUNDS = [
         lesson: "An AI learns from its training data. The rainy field was barely in the dataset, so the model never learned what a wet, diseased crop looks like."
     },
     {
-        brief: "New season, new model. The farm now logs three weather conditions — and the AI still has a soft spot.",
+        brief: "New season, new model. The farm now logs three weather conditions, and the AI still has a soft spot. Aling Rosa is waiting to see if it has learned her fields yet.",
         goal: "Your budget is smaller than the gap. Decide which condition actually needs the samples.",
         groupHeading: "WEATHER CONDITION",
         budget: 5,
@@ -1504,7 +1689,7 @@ const BIAS_ROUNDS = [
         lesson: "Cloudy was a little behind, but rainy was far behind. Samples spent on a group that is already doing fine buy you almost nothing."
     },
     {
-        brief: "The dataset looks healthy overall. The farm manager still reports failures on mature crops after heavy rain.",
+        brief: "The dataset looks healthy overall. Mang Tonyo, who grows mature corn, still gets wrong calls after heavy rain.",
         goal: "The imbalance is hiding inside a combination of conditions. Scan deeper, find the subgroup, and repair it.",
         groupHeading: "WEATHER \u00D7 CROP AGE",
         budget: 6,
@@ -1569,6 +1754,7 @@ function biasBestPossibleMin() {
 }
 
 function startBiasLab() {
+    if (storyGate("bias", startBiasLab)) return;
     biasRound = 1;
     biasScore = 0;
     biasCorrect = 0;
@@ -1691,6 +1877,8 @@ function renderBiasScanButtons() {
 
 function runBiasScan(type) {
     if (biasScansLeft <= 0 || biasScansUsed.includes(type)) return;
+
+    unlockAchievement("data-detective");
 
     const round = biasCurrentRound();
     biasScansLeft--;
@@ -1942,6 +2130,7 @@ function nextBiasRound() {
 }
 
 function completeBiasLab() {
+    if (biasCorrect === BIAS_ROUNDS.length) unlockAchievement("perfect-vision");
     const bonusXP = biasCorrect === BIAS_ROUNDS.length ? 250 : biasCorrect >= 2 ? 150 : 75;
     addXP(bonusXP);
     document.getElementById("bias-completion-stars").textContent =
@@ -1958,6 +2147,137 @@ function completeBiasLab() {
 /* =========================================================
    FINAL TEST
    ========================================================= */
+
+/* ---------------------------------------------------------
+   STAGE 8 // ALERT THRESHOLD
+   Illustrative costs and simulated data. The player sets the
+   probability above which the AI sends an alert, and sees the
+   peso cost of false alarms vs missed disease at that setting.
+   --------------------------------------------------------- */
+let finalAlertThreshold = 50;
+let finalAlertCost = 0;
+const FINAL_COST_FALSE_ALARM = 3000;
+const FINAL_COST_MISSED = 10000;
+const FINAL_THRESHOLD_FIELDS = [
+    { name: "FIELD A", p: 96, diseased: true },
+    { name: "FIELD B", p: 91, diseased: true },
+    { name: "FIELD C", p: 84, diseased: true },
+    { name: "FIELD D", p: 78, diseased: false },
+    { name: "FIELD E", p: 66, diseased: true },
+    { name: "FIELD F", p: 58, diseased: false },
+    { name: "FIELD G", p: 47, diseased: true },
+    { name: "FIELD H", p: 35, diseased: false },
+    { name: "FIELD I", p: 26, diseased: true },
+    { name: "FIELD J", p: 9, diseased: false }
+];
+
+function finalMoney(amount) {
+    return `\u20B1${amount.toLocaleString("en-US")}`;
+}
+
+function finalThresholdOutcome(threshold) {
+    let falseAlarms = 0;
+    let missed = 0;
+    FINAL_THRESHOLD_FIELDS.forEach(field => {
+        const alert = field.p >= threshold;
+        if (alert && !field.diseased) falseAlarms++;
+        if (!alert && field.diseased) missed++;
+    });
+    return {
+        falseAlarms,
+        missed,
+        cost: falseAlarms * FINAL_COST_FALSE_ALARM + missed * FINAL_COST_MISSED
+    };
+}
+
+/* Cheapest cost over every threshold, and the contiguous range that achieves it. */
+function finalThresholdBest() {
+    let minCost = Infinity;
+    let lo = 0;
+    let hi = 0;
+    for (let t = 0; t <= 100; t++) {
+        const cost = finalThresholdOutcome(t).cost;
+        if (cost < minCost) {
+            minCost = cost;
+            lo = t;
+            hi = t;
+        } else if (cost === minCost && t === hi + 1) {
+            hi = t;
+        }
+    }
+    return { minCost, lo, hi };
+}
+
+function buildFinalThresholdContent() {
+    return `<strong>LAST SEASON'S RESULTS (OUTCOMES KNOWN)</strong>
+        <div class="final-sample-list" id="final-threshold-list"></div>
+        <label class="final-threshold-control" for="final-threshold-slider">
+            <span>SEND AN ALERT IF DISEASE PROBABILITY \u2265 <strong id="final-threshold-value">50</strong>%</span>
+            <input type="range" id="final-threshold-slider" min="0" max="100" value="50" oninput="updateFinalThreshold()">
+        </label>
+        <div class="final-sample-list" id="final-threshold-stats"></div>
+        <small class="final-threshold-note">ILLUSTRATIVE COSTS, SIMULATED DATA. A FALSE ALARM WASTES ${finalMoney(FINAL_COST_FALSE_ALARM)} OF SPRAY. A MISSED DISEASE LOSES ${finalMoney(FINAL_COST_MISSED)} OF HARVEST.</small>`;
+}
+
+function updateFinalThreshold() {
+    const slider = document.getElementById("final-threshold-slider");
+    if (!slider) return;
+
+    const threshold = Number(slider.value);
+    document.getElementById("final-threshold-value").textContent = threshold;
+
+    document.getElementById("final-threshold-list").innerHTML = FINAL_THRESHOLD_FIELDS.map(field => {
+        const alert = field.p >= threshold;
+        const wrong = (alert && !field.diseased) || (!alert && field.diseased);
+        return `<div class="final-sample-row final-threshold-row ${wrong ? "wrong" : ""}">
+            <span>${field.name} \u00B7 ${field.p}%</span>
+            <b>${field.diseased ? "\uD83E\uDDA0 DISEASED" : "\uD83C\uDF3E HEALTHY"} \u2192 ${alert ? "\uD83D\uDEA8 ALERT" : "NO ALERT"} ${wrong ? "\u2715" : "\u2713"}</b>
+        </div>`;
+    }).join("");
+
+    const outcome = finalThresholdOutcome(threshold);
+    document.getElementById("final-threshold-stats").innerHTML = `
+        <div class="final-sample-row"><span>FALSE ALARMS</span><b>${outcome.falseAlarms} \u00D7 ${finalMoney(FINAL_COST_FALSE_ALARM)} = ${finalMoney(outcome.falseAlarms * FINAL_COST_FALSE_ALARM)}</b></div>
+        <div class="final-sample-row"><span>MISSED DISEASE</span><b>${outcome.missed} \u00D7 ${finalMoney(FINAL_COST_MISSED)} = ${finalMoney(outcome.missed * FINAL_COST_MISSED)}</b></div>
+        <div class="final-sample-row"><span>TOTAL COST</span><b>${finalMoney(outcome.cost)}</b></div>`;
+}
+
+function submitFinalThreshold() {
+    const slider = document.getElementById("final-threshold-slider");
+    const threshold = Number(slider.value);
+    const outcome = finalThresholdOutcome(threshold);
+    const best = finalThresholdBest();
+    const breakEven = Math.round(FINAL_COST_FALSE_ALARM / (FINAL_COST_FALSE_ALARM + FINAL_COST_MISSED) * 100);
+    const ratio = (FINAL_COST_MISSED / FINAL_COST_FALSE_ALARM).toFixed(1);
+    const feedback = document.getElementById("final-stage-feedback");
+    const correct = outcome.cost === best.minCost;
+
+    slider.disabled = true;
+    finalAlertThreshold = threshold;
+    finalAlertCost = outcome.cost;
+
+    if (correct) {
+        finalCorrect++;
+        finalScore += 100;
+        playerScore += 100;
+        addXP(50);
+        feedback.textContent = `\u2713 CHEAPEST RULE: ${finalMoney(outcome.cost)}. Any threshold from ${best.lo}% to ${best.hi}% does this well. A missed disease costs ${ratio}\u00D7 a false alarm, so a good rule of thumb is to alert when the chance of disease is above cost of false alarm \u00F7 (false alarm + missed disease) = ${finalMoney(FINAL_COST_FALSE_ALARM)} \u00F7 ${finalMoney(FINAL_COST_FALSE_ALARM + FINAL_COST_MISSED)} \u2248 ${breakEven}%.`;
+        feedback.className = "game-message success final-feedback";
+    } else {
+        finalScore += 25;
+        playerScore += 25;
+        feedback.textContent = `\u2715 YOUR COST: ${finalMoney(outcome.cost)}. The cheapest rule on this data costs ${finalMoney(best.minCost)} (threshold ${best.lo}%\u2013${best.hi}%). A missed disease costs ${ratio}\u00D7 a false alarm, so the cheaper mistake is to warn too often, not too rarely.`;
+        feedback.className = "game-message error final-feedback";
+    }
+
+    document.getElementById("final-score").textContent = finalScore;
+    const lockButton = document.querySelector(".final-choice");
+    if (lockButton) lockButton.disabled = true;
+    const nextButton = document.getElementById("next-final-stage-button");
+    nextButton.textContent = "VIEW FIELD ALERT \u2192";
+    nextButton.classList.remove("hidden");
+}
+
 
 const FINAL_TEST_TOTAL_STAGES = 8;
 let finalStage = 1;
@@ -2016,15 +2336,18 @@ const finalStages = [
         reason: "Rainy-field data is underrepresented and may be contributing to uneven performance."
     },
     {
-        label: "STAGE 8 // DEPLOY THE FIELD ALERT",
-        content: `<div class="final-alert-summary"><span>🚨 FIELD ALERT // RICE-07</span><strong>🦠 DISEASED</strong><small>Moisture 58% · Temp 32°C · Humidity 76% · Leaf spots YES · Confidence 89%</small></div>`,
-        prompt: "IS THIS HIGH-CONFIDENCE PREDICTION READY TO BECOME A FIELD ALERT?",
-        options: [{ text: "YES, HIGH CONFIDENCE", value: "yes" }, { text: "NO, NEEDS REVIEW", value: "no" }], answer: "yes",
-        reason: "The data was prepared, the model was tested, confidence is high, and data balance was investigated."
+        label: "STAGE 8 // SET THE ALERT THRESHOLD",
+        custom: "threshold",
+        content: buildFinalThresholdContent(),
+        prompt: "SLIDE THE THRESHOLD TO FIND THE CHEAPEST ALERT RULE, THEN LOCK IT IN.",
+        options: [{ text: "LOCK IN THRESHOLD", value: "lock" }],
+        answer: "lock",
+        reason: ""
     }
 ];
 
 function startFinalTest() {
+    if (storyGate("final", startFinalTest)) return;
     finalStage = 1;
     finalScore = 0;
     finalCorrect = 0;
@@ -2042,6 +2365,7 @@ function loadFinalStage() {
     document.getElementById("final-score").textContent = finalScore;
     document.getElementById("final-stage-label").textContent = stage.label;
     document.getElementById("final-stage-content").innerHTML = stage.content;
+    if (stage.custom === "threshold") updateFinalThreshold();
     document.getElementById("final-stage-feedback").textContent = stage.prompt;
     document.getElementById("final-stage-feedback").className = "game-message";
     document.getElementById("final-stage-actions").innerHTML = stage.options.map(option => `<button class="secondary-button final-choice" data-value="${option.value}" onclick="answerFinalStage('${option.value}')">${option.text}</button>`).join("");
@@ -2052,6 +2376,10 @@ function answerFinalStage(value) {
     if (finalLocked) return;
     finalLocked = true;
     const stage = finalStages[finalStage - 1];
+    if (stage.custom === "threshold") {
+        submitFinalThreshold();
+        return;
+    }
     const correct = value === stage.answer;
     document.querySelectorAll(".final-choice").forEach(button => {
         button.disabled = true;
@@ -2089,8 +2417,10 @@ function completeFinalTest() {
     const percentage = Math.round((finalCorrect / FINAL_TEST_TOTAL_STAGES) * 100);
     const bonusXP = percentage >= 90 ? 500 : percentage >= 70 ? 350 : 200;
     addXP(bonusXP);
+    document.getElementById("final-alert-rule").textContent = `ALERT AT ${finalAlertThreshold}%+`;
+    document.getElementById("final-alert-cost").textContent = `COST ON LAST SEASON'S DATA: ${finalMoney(finalAlertCost)} (CHEAPEST POSSIBLE: ${finalMoney(finalThresholdBest().minCost)})`;
     document.getElementById("final-completion-stars").textContent = percentage >= 90 ? "★ ★ ★" : percentage >= 70 ? "★ ★" : "★";
-    document.getElementById("final-completion-message").textContent = `${finalCorrect} / ${FINAL_TEST_TOTAL_STAGES} pipeline decisions correct. The farm alert is ready because the process was checked from data to deployment. +${bonusXP} XP earned.`;
+    document.getElementById("final-completion-message").textContent = `${finalCorrect} / ${FINAL_TEST_TOTAL_STAGES} pipeline decisions correct. The farm alert is ready because the process was checked from data to deployment. But an alert only helps if it works for every farmer it reaches: a model that performs well on some fields and poorly on others serves some farmers better than others, so checking who the data represents matters as much as checking accuracy. +${bonusXP} XP earned.`;
     showScreen("final-test-complete");
 }
 

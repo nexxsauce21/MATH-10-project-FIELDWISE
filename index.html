@@ -339,11 +339,12 @@
                 <div>🧪 FIELD TEST <strong>✓ PASSED</strong></div>
                 <div>⚖️ DATA BALANCE <strong>✓ INVESTIGATED</strong></div>
             </div>
-            <div class="final-alert-summary"><span>🚨 FIELD ALERT // RICE-07</span><strong>🦠 DISEASED</strong><small>CONFIDENCE: 89%</small></div>
+            <div class="final-alert-summary"><span>🚨 YOUR ALERT RULE</span><strong id="final-alert-rule">ALERT AT 50%+</strong><small id="final-alert-cost"></small></div>
             <div class="final-good-ai">Good AI starts with good data.</div>
             <div id="final-completion-message" class="completion-message">The crop-monitoring pipeline is ready for the farm.</div>
             <div class="completion-buttons">
-                <button class="main-button" onclick="startFinalTest()">RETRY TEST</button>
+                <button class="main-button" onclick="showEpilogue()">SEE THE HARVEST →</button>
+                <button class="secondary-button" onclick="startFinalTest()">RETRY TEST</button>
                 <button class="secondary-button" onclick="showLevels()">LEVEL SELECT</button>
             </div>
         </div>
@@ -793,7 +794,7 @@
                     <p class="optimizer-instructions">
                         Allocate limited resources to a rice field. Find a strong crop yield without simply using the most of everything.
                     </p>
-                    <div class="level-goal"><strong>GOAL</strong><span>Reach at 100% crop yield in each round while staying within the available resources.</span></div>
+                    <div class="level-goal"><strong>GOAL</strong><span>Reach 100% crop yield in each round while staying within the available resources.</span></div>
                 </div>
 
                 <div id="opt-task-desc" class="optimizer-task">Choose water, fertilizer, and workers for this field.</div>
@@ -1089,35 +1090,35 @@
 
             <div class="achievement-grid">
 
-                <div class="achievement-card locked-achievement">
+                <div class="achievement-card locked-achievement" data-achievement="pattern-scout">
                     <div class="achievement-icon">◈</div>
                     <div>
                         <h3>PATTERN SCOUT</h3>
-                        <p>Complete Pattern Hunter.</p>
+                        <p>Complete Field Scout.</p>
                     </div>
                 </div>
 
-                <div class="achievement-card locked-achievement">
+                <div class="achievement-card locked-achievement" data-achievement="perfect-vision">
                     <div class="achievement-icon">◆</div>
                     <div>
                         <h3>PERFECT VISION</h3>
-                        <p>Complete a level with perfect accuracy.</p>
+                        <p>Finish any level with perfect accuracy.</p>
                     </div>
                 </div>
 
-                <div class="achievement-card locked-achievement">
+                <div class="achievement-card locked-achievement" data-achievement="speed-demon">
                     <div class="achievement-icon">⚡</div>
                     <div>
                         <h3>SPEED DEMON</h3>
-                        <p>Complete a training protocol quickly.</p>
+                        <p>Finish Field Scout in under 45 seconds with at least 80% accuracy.</p>
                     </div>
                 </div>
 
-                <div class="achievement-card locked-achievement">
+                <div class="achievement-card locked-achievement" data-achievement="data-detective">
                     <div class="achievement-icon">◇</div>
                     <div>
                         <h3>DATA DETECTIVE</h3>
-                        <p>Investigate an unusual dataset.</p>
+                        <p>Run a data scan in Bias Lab.</p>
                     </div>
                 </div>
 
@@ -1125,6 +1126,48 @@
 
         </div>
 
+    </section>
+
+
+    <!-- =========================================================
+         STORY + EPILOGUE
+    ========================================================== -->
+    <section id="story" class="screen">
+        <div class="completion-container story-card">
+            <div id="story-chapter" class="system-label"></div>
+            <div id="story-portraits" class="story-portraits"></div>
+            <h2 id="story-title" class="story-title"></h2>
+            <div id="story-text" class="story-text"></div>
+            <div class="level-goal"><strong>YOUR JOB</strong><span id="story-mission"></span></div>
+            <div class="completion-buttons">
+                <button class="main-button" onclick="continueStory()">START CHAPTER \u2192</button>
+                <button class="secondary-button" onclick="skipStory()">SKIP STORY</button>
+            </div>
+        </div>
+    </section>
+
+    <section id="epilogue" class="screen">
+        <div class="completion-container story-card">
+            <div class="system-label">FIELDWISE // EPILOGUE</div>
+            <h1>THE HARVEST</h1>
+            <div class="story-portraits">\uD83D\uDC68\u200D\uD83C\uDF3E \uD83D\uDC69\u200D\uD83C\uDF3E \uD83E\uDDD3</div>
+            <div class="story-text">
+                <p>A season later, Juan's sensors flag a sick patch in one corner of his field within a day. He sprays only that corner instead of the whole plot, and most of his harvest is saved.</p>
+                <p>Aling Rosa's rainy-season alerts now come true far more often, because her wet fields are finally part of the data. Mang Tonyo's mature corn gets the same attention.</p>
+                <p>FIELDWISE did not replace what they know about their land. It gave them an early warning they could check against their own eyes, and it worked for all three because someone checked that the data included everyone.</p>
+            </div>
+            <div class="story-farmer-list">
+                <div>\uD83D\uDC68\u200D\uD83C\uDF3E JUAN <strong>CATCHES PROBLEMS EARLY, SPRAYS ONLY WHERE NEEDED</strong></div>
+                <div>\uD83D\uDC69\u200D\uD83C\uDF3E ALING ROSA <strong>GETS RELIABLE ADVICE IN THE RAINY SEASON</strong></div>
+                <div>\uD83E\uDDD3 MANG TONYO <strong>HIS MATURE CORN IS NO LONGER OVERLOOKED</strong></div>
+            </div>
+            <div class="final-good-ai">Good AI starts with good data, and good data starts with remembering everyone who farms.</div>
+            <small class="story-note">JUAN, ALING ROSA, AND MANG TONYO ARE FICTIONAL CHARACTERS. ALL NUMBERS IN THE GAME ARE SIMULATED.</small>
+            <div class="completion-buttons">
+                <button class="main-button" onclick="showLevels()">LEVEL SELECT</button>
+                <button class="secondary-button" onclick="showMainMenu()">MAIN MENU</button>
+            </div>
+        </div>
     </section>
 
 

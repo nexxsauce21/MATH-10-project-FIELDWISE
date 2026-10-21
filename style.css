@@ -1933,6 +1933,36 @@ button {
     opacity: 0.72;
 }
 
+.unlocked-achievement {
+    opacity: 1;
+    border-color: var(--accent);
+    box-shadow: 0 0 18px rgba(139, 211, 168, 0.25);
+}
+
+.achievement-toast {
+    position: fixed;
+    top: 16px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 1000;
+    padding: 12px 20px;
+    border-radius: 12px;
+    border: 1px solid var(--accent);
+    background: rgba(10, 20, 14, 0.95);
+    color: var(--accent);
+    font-size: 0.85rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-align: center;
+    max-width: calc(100vw - 24px);
+    animation: achievement-toast-in 0.3s ease-out;
+}
+
+@keyframes achievement-toast-in {
+    from { opacity: 0; transform: translate(-50%, -12px); }
+    to { opacity: 1; transform: translate(-50%, 0); }
+}
+
 @media (max-width: 640px) {
     .screen {
         min-height: 100svh;
@@ -2604,6 +2634,31 @@ button {
     border-bottom: none;
 }
 
+.final-threshold-control {
+    display: grid;
+    gap: 10px;
+    margin: 16px 0 10px;
+    font-size: 0.76rem;
+    color: var(--muted);
+}
+
+.final-threshold-control input {
+    width: 100%;
+    accent-color: var(--success);
+}
+
+.final-threshold-row.wrong b {
+    color: var(--danger);
+}
+
+.final-threshold-note {
+    display: block;
+    margin-top: 12px;
+    font-size: 0.64rem;
+    letter-spacing: 0.04em;
+    color: var(--muted);
+}
+
 .final-stage-actions {
     display: flex;
     justify-content: center;
@@ -3146,5 +3201,82 @@ button {
 
     .bias-scan {
         min-width: 100%;
+    }
+}
+
+/* =========================================================
+   STORY + EPILOGUE
+   ========================================================= */
+
+.story-card {
+    max-width: 760px;
+}
+
+.story-portraits {
+    margin: 10px 0 4px;
+    font-size: 3rem;
+    letter-spacing: 0.18em;
+}
+
+.story-title {
+    margin: 6px 0 16px;
+    font-size: 1.3rem;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+}
+
+.story-text {
+    display: grid;
+    gap: 12px;
+    max-width: 620px;
+    margin: 0 auto;
+    color: var(--muted);
+    font-size: 0.9rem;
+    line-height: 1.65;
+    text-align: left;
+}
+
+.story-text p {
+    margin: 0;
+}
+
+.story-farmer-list {
+    display: grid;
+    gap: 8px;
+    width: min(100%, 520px);
+    margin: 18px auto;
+    padding: 16px;
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    background: rgba(38, 59, 40, 0.62);
+    color: var(--muted);
+    font-size: 0.72rem;
+    text-align: left;
+}
+
+.story-farmer-list strong {
+    display: block;
+    margin-top: 2px;
+    color: var(--text);
+    font-size: 0.66rem;
+    letter-spacing: 0.04em;
+}
+
+.story-note {
+    display: block;
+    margin-top: 14px;
+    color: var(--muted);
+    font-size: 0.64rem;
+    letter-spacing: 0.04em;
+}
+
+@media (max-width: 640px) {
+    #story,
+    #epilogue {
+        overflow-y: auto;
+    }
+
+    .story-portraits {
+        font-size: 2.4rem;
     }
 }
