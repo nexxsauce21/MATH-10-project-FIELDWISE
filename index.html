@@ -41,6 +41,8 @@
                     </div>
                 </div>
 
+                <div class="rank-line">RANK <strong id="player-rank">TRAINEE</strong></div>
+
                 <div class="xp-container">
                     <div class="xp-text">
                         <span>EXPERIENCE</span>
@@ -62,11 +64,15 @@
                 <button class="secondary-button" onclick="showAchievements()">
                     ACHIEVEMENTS
                 </button>
+
+                <button class="secondary-button" onclick="showTrainingReport()">TRAINING REPORT</button>
+
+                <button class="secondary-button danger-button" onclick="resetProgress()">RESET TRAINING DATA</button>
             </div>
 
             <div class="system-status">
                 SYSTEM STATUS: <span>ONLINE</span>
-                <span class="field-status">FIELD STATUS: MONITORING</span>
+                <span class="field-status">FIELD STATUS: <b id="field-status-text">MONITORING</b></span>
             </div>
 
         </div>
@@ -206,76 +212,84 @@
 
             <div class="level-grid">
 
-                <div class="level-card unlocked" onclick="startPatternHunter()">
+                <div class="level-card" data-level="1" onclick="openLevel(1)">
                     <div class="level-number">01</div>
                     <div class="level-name">FIELD SCOUT</div>
                     <div class="level-description">
                         Inspect smart-farm observations and find the crop condition that does not fit the normal field pattern.
                     </div>
-                    <div class="level-status">✓ UNLOCKED</div>
+                    <div class="level-fantasy">Find the weird one</div>
+                    <div class="level-status"></div>
                 </div>
 
-                <div class="level-card unlocked" onclick="startDataBuilder()">
+                <div class="level-card" data-level="2" onclick="openLevel(2)">
                     <div class="level-number">02</div>
                     <div class="level-name">DATA HARVEST</div>
                     <div class="level-description">
                         Prepare crop observations for the AI. Keep useful samples, fix labels, and remove unreliable field data.
                     </div>
-                    <div class="level-status">✓ UNLOCKED</div>
+                    <div class="level-fantasy">Fix the dataset</div>
+                    <div class="level-status"></div>
                 </div>
 
-                <div class="level-card unlocked" onclick="startClassifier()">
+                <div class="level-card" data-level="3" onclick="openLevel(3)">
                     <div class="level-number">03</div>
                     <div class="level-name">CROP CLASSIFIER</div>
                     <div class="level-description">
                         Learn classification by placing five unseen rice samples into HEALTHY or DISEASED categories using their features.
                     </div>
-                    <div class="level-status">✓ UNLOCKED</div>
+                    <div class="level-fantasy">Teach the AI to decide</div>
+                    <div class="level-status"></div>
                 </div>
 
-                <div class="level-card unlocked" onclick="startProbabilityLevel()">
+                <div class="level-card" data-level="4" onclick="openLevel(4)">
                     <div class="level-number">04</div>
                     <div class="level-name">PROBABILITY</div>
                     <div class="level-description">
                         Make predictions under uncertainty. AI uses probabilities to express confidence because real-world data rarely gives absolute certainty.
                     </div>
-                    <div class="level-status">✓ UNLOCKED</div>
+                    <div class="level-fantasy">How confident is the model?</div>
+                    <div class="level-status"></div>
                 </div>
 
-                <div class="level-card unlocked" onclick="startModelBreaker()">
+                <div class="level-card" data-level="5" onclick="openLevel(5)">
                     <div class="level-number">05</div>
                     <div class="level-name">MODEL BREAKER</div>
                     <div class="level-description">
                         Compare two crop models and spot the one that memorized its training field instead of learning a pattern for new fields.
                     </div>
-                    <div class="level-status">✓ UNLOCKED</div>
+                    <div class="level-fantasy">Did it actually learn?</div>
+                    <div class="level-status"></div>
                 </div>
 
-                <div class="level-card unlocked" onclick="startFarmOptimizer()">
+                <div class="level-card" data-level="6" onclick="openLevel(6)">
                     <div class="level-number">06</div>
                     <div class="level-name">FARM OPTIMIZER</div>
                     <div class="level-description">
                         Allocate limited water, fertilizer, and workers to find the best crop yield without wasting the farm's resources.
                     </div>
-                    <div class="level-status">✓ UNLOCKED</div>
+                    <div class="level-fantasy">Do more with less</div>
+                    <div class="level-status"></div>
                 </div>
 
-                <div class="level-card unlocked" onclick="startBiasLab()">
+                <div class="level-card" data-level="7" onclick="openLevel(7)">
                     <div class="level-number">07</div>
                     <div class="level-name">BIAS LAB</div>
                     <div class="level-description">
                         Investigate how data and weights affect AI decisions. AI can inherit unfair patterns when its training data or rules are unbalanced.
                     </div>
-                    <div class="level-status">✓ UNLOCKED</div>
+                    <div class="level-fantasy">Who is the AI failing?</div>
+                    <div class="level-status"></div>
                 </div>
 
-                <div class="level-card unlocked" onclick="startFinalTest()">
+                <div class="level-card" data-level="8" onclick="openLevel(8)">
                     <div class="level-number">08</div>
                     <div class="level-name">FINAL TEST</div>
                     <div class="level-description">
                         Run the crop-monitoring pipeline from field observations to a responsible farm alert.
                     </div>
-                    <div class="level-status">✓ UNLOCKED</div>
+                    <div class="level-fantasy">Can you trust the whole system?</div>
+                    <div class="level-status"></div>
                 </div>
 
             </div>
@@ -340,10 +354,12 @@
                 <div>⚖️ DATA BALANCE <strong>✓ INVESTIGATED</strong></div>
             </div>
             <div class="final-alert-summary"><span>🚨 YOUR ALERT RULE</span><strong id="final-alert-rule">ALERT AT 50%+</strong><small id="final-alert-cost"></small></div>
+            <div id="final-farm-outcome" class="final-farm-outcome"></div>
             <div class="final-good-ai">Good AI starts with good data.</div>
             <div id="final-completion-message" class="completion-message">The crop-monitoring pipeline is ready for the farm.</div>
             <div class="completion-buttons">
                 <button class="main-button" onclick="showEpilogue()">SEE THE HARVEST →</button>
+                <button class="secondary-button" onclick="showTrainingReport()">TRAINING REPORT</button>
                 <button class="secondary-button" onclick="startFinalTest()">RETRY TEST</button>
                 <button class="secondary-button" onclick="showLevels()">LEVEL SELECT</button>
             </div>
@@ -623,6 +639,9 @@
 
                 <div id="classifier-observation" class="classifier-observation"></div>
 
+                <div id="classifier-ai-lock" class="ai-lock">🤖 FIELDWISE IS WAITING. CLASSIFY THE SAMPLE FIRST.</div>
+
+                <div id="classifier-ai-panel" class="hidden">
                 <div class="fieldwise-panel">
                     <div class="fieldwise-heading"><span>AI PREDICTION</span><strong>FIELDWISE</strong></div>
                     <div class="prediction-bars">
@@ -630,6 +649,7 @@
                         <div class="prediction-bar-row"><span>DISEASED</span><div><i id="classifier-diseased-bar"></i></div><strong id="classifier-diseased-value">0%</strong></div>
                     </div>
                     <div class="model-prediction"><span>🤖 PREDICTION</span><strong id="classifier-prediction">--</strong><small>CONFIDENCE <b id="classifier-confidence">0%</b></small></div>
+                </div>
                 </div>
 
                 <div class="classifier-controls">
@@ -1140,7 +1160,7 @@
             <div id="story-text" class="story-text"></div>
             <div class="level-goal"><strong>YOUR JOB</strong><span id="story-mission"></span></div>
             <div class="completion-buttons">
-                <button class="main-button" onclick="continueStory()">START CHAPTER \u2192</button>
+                <button class="main-button" onclick="continueStory()">START CHAPTER →</button>
                 <button class="secondary-button" onclick="skipStory()">SKIP STORY</button>
             </div>
         </div>
@@ -1148,28 +1168,35 @@
 
     <section id="epilogue" class="screen">
         <div class="completion-container story-card">
-            <div class="system-label">FIELDWISE // EPILOGUE</div>
+            <div id="epilogue-label" class="system-label">FIELDWISE // EPILOGUE</div>
             <h1>THE HARVEST</h1>
-            <div class="story-portraits">\uD83D\uDC68\u200D\uD83C\uDF3E \uD83D\uDC69\u200D\uD83C\uDF3E \uD83E\uDDD3</div>
-            <div class="story-text">
-                <p>A season later, Juan's sensors flag a sick patch in one corner of his field within a day. He sprays only that corner instead of the whole plot, and most of his harvest is saved.</p>
-                <p>Aling Rosa's rainy-season alerts now come true far more often, because her wet fields are finally part of the data. Mang Tonyo's mature corn gets the same attention.</p>
-                <p>FIELDWISE did not replace what they know about their land. It gave them an early warning they could check against their own eyes, and it worked for all three because someone checked that the data included everyone.</p>
-            </div>
-            <div class="story-farmer-list">
-                <div>\uD83D\uDC68\u200D\uD83C\uDF3E JUAN <strong>CATCHES PROBLEMS EARLY, SPRAYS ONLY WHERE NEEDED</strong></div>
-                <div>\uD83D\uDC69\u200D\uD83C\uDF3E ALING ROSA <strong>GETS RELIABLE ADVICE IN THE RAINY SEASON</strong></div>
-                <div>\uD83E\uDDD3 MANG TONYO <strong>HIS MATURE CORN IS NO LONGER OVERLOOKED</strong></div>
-            </div>
-            <div class="final-good-ai">Good AI starts with good data, and good data starts with remembering everyone who farms.</div>
+            <div class="story-portraits">👨‍🌾 👩‍🌾 🧓</div>
+            <div id="epilogue-text" class="story-text"></div>
+            <div id="epilogue-farmers" class="story-farmer-list"></div>
+            <div id="epilogue-moral" class="final-good-ai"></div>
             <small class="story-note">JUAN, ALING ROSA, AND MANG TONYO ARE FICTIONAL CHARACTERS. ALL NUMBERS IN THE GAME ARE SIMULATED.</small>
             <div class="completion-buttons">
-                <button class="main-button" onclick="showLevels()">LEVEL SELECT</button>
+                <button class="main-button" onclick="showTrainingReport()">TRAINING REPORT</button>
+                <button class="secondary-button" onclick="showLevels()">LEVEL SELECT</button>
                 <button class="secondary-button" onclick="showMainMenu()">MAIN MENU</button>
             </div>
         </div>
     </section>
 
+
+    <section id="training-report" class="screen">
+        <div class="completion-container">
+            <div class="system-label">FIELDWISE // TRAINING REPORT</div>
+            <h1>FIELDWISE TRAINING REPORT</h1>
+            <div class="completion-title">AI TRAINING PERFORMANCE</div>
+            <div id="report-rows" class="results-panel"></div>
+            <div id="report-cert" class="final-alert-summary"></div>
+            <div class="completion-buttons">
+                <button class="main-button" onclick="showMainMenu()">MAIN MENU</button>
+                <button class="secondary-button" onclick="showLevels()">LEVEL SELECT</button>
+            </div>
+        </div>
+    </section>
 
     <script src="script.js"></script>
 

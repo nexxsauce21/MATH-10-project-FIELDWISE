@@ -242,15 +242,15 @@ const STORY = {
         text: [
             "With clean records, the AI can finally learn. Juan brings new rice samples from his field that it has never seen before."
         ],
-        mission: "Look at each sample's features (moisture, humidity, leaf spots) and place it in HEALTHY or DISEASED, the way the AI will."
+        mission: "Look at each sample's features (moisture, temperature, leaf spots) and place it in HEALTHY or DISEASED before FIELDWISE shows its answer. Then compare your call with the AI's."
     },
     probability: {
-        chapter: "CHAPTER 4 // HOW SURE IS IT?",
+        chapter: "CHAPTER 4 // HOW CONFIDENT IS THE MODEL?",
         portraits: "\uD83D\uDC68\u200D\uD83C\uDF3E \uD83E\uDD14",
         title: "A 51% Guess Is Not a 95% Guess",
         text: [
-            "Juan asks the question that matters most: how sure is it? Spraying a healthy field wastes money, but ignoring a sick one costs even more.",
-            "The AI answers with probabilities, and the gap between them tells him how much to trust it."
+            "Juan asks the question that matters most: how confident is the model? Spraying a healthy field wastes money, but ignoring a sick one costs even more.",
+            "The AI answers with probabilities, and the gap between them shows how confident the model is. That is not the same as being right."
         ],
         mission: "Read the two percentages and decide whether the AI is HIGH, MEDIUM, or LOW confidence."
     },
@@ -680,9 +680,7 @@ function processDataSample(action) {
     }
 
     updateDataBuilderDashboard();
-    feedback.textContent = correct
-        ? `✓ CORRECT: ${sample.reason}`
-        : `✕ NOT QUITE: ${sample.reason} RECOMMENDED ACTION: ${actionLabels[sample.correctAction]}.`;
+    setWhyFeedback(feedback, correct ? "✓ CORRECT." : `✕ NOT QUITE. RECOMMENDED: ${actionLabels[sample.correctAction]}.`, sample.reason);
     feedback.className = correct ? "game-message success data-decision-feedback" : "game-message error data-decision-feedback";
     nextButton.textContent = dataBuilderRound >= DATA_BUILDER_TOTAL_SAMPLES ? "CHECK DATASET →" : "NEXT SAMPLE →";
     nextButton.classList.remove("hidden");
@@ -760,7 +758,7 @@ const cropClassifierCases = [
     { profile: "healthy", prediction: "HEALTHY", healthy: 94, diseased: 6, actual: "HEALTHY", reason: "The readings are in the healthy range and there are no leaf spots." },
     { profile: "stress", prediction: "DISEASED", healthy: 9, diseased: 91, actual: "DISEASED", reason: "Dry soil, high temperature, and leaf spots point to crop stress." },
     { profile: "warmHealthy", prediction: "DISEASED", healthy: 43, diseased: 57, actual: "HEALTHY", reason: "The features remain inside the healthy pattern. FIELDWISE over-weighted the warm temperature." },
-    { profile: "subtleDisease", prediction: "HEALTHY", healthy: 58, diseased: 42, actual: "DISEASED", reason: "Leaf spots are the stronger signal. FIELDWISE missed this diseased crop." }
+    { profile: "subtleDisease", prediction: "HEALTHY", healthy: 88, diseased: 12, actual: "DISEASED", reason: "Leaf spots are the stronger signal. FIELDWISE was very confident and still missed this diseased crop. Confidence is not correctness." }
 ];
 
 function randomInteger(min, max) {
@@ -828,6 +826,8 @@ function startClassifierRound() {
     document.getElementById("classifier-diseased-value").textContent = `${currentCase.diseased}%`;
     document.getElementById("classifier-prediction").textContent = currentCase.prediction;
     document.getElementById("classifier-confidence").textContent = `${Math.max(currentCase.healthy, currentCase.diseased)}%`;
+    document.getElementById("classifier-ai-panel").classList.add("hidden");
+    document.getElementById("classifier-ai-lock").classList.remove("hidden");
 
     nearestPanel.classList.add("hidden");
     nearestPanel.innerHTML = "";
@@ -867,17 +867,23 @@ function submitClassifier(classification) {
         classifierScore += 100;
         playerScore += 100;
         addXP(100);
-        feedback.textContent = `✓ CORRECT: ${currentCase.reason} ${modelCorrect ? "FIELDWISE also matched." : "You caught a FIELDWISE mistake."}`;
+        setWhyFeedback(feedback, modelCorrect ? "✓ CORRECT. FIELDWISE MATCHED YOU." : "✓ CORRECT. YOU CAUGHT A FIELDWISE MISTAKE.", currentCase.reason);
         feedback.className = "game-message success classifier-feedback";
     } else {
         classifierScore += 25;
         playerScore += 25;
-        feedback.textContent = `✕ WRONG: This sample is ${currentCase.actual}. ${currentCase.reason} ${modelCorrect ? "FIELDWISE had the right classification." : "The AI prediction was also wrong."}`;
+        setWhyFeedback(feedback, `✕ NOT QUITE. THIS SAMPLE IS ${currentCase.actual}.${modelCorrect ? " FIELDWISE GOT IT RIGHT." : " FIELDWISE WAS WRONG TOO."}`, currentCase.reason);
         feedback.className = "game-message error classifier-feedback";
     }
 
     document.getElementById("classifier-score").textContent = classifierScore;
-    nearestPanel.innerHTML = `<div class="nearest-title">CLASSIFICATION CHECK:</div><div class="nearest-row"><span>AI PREDICTION:</span><strong>${currentCase.prediction}</strong></div><div class="nearest-row prediction-row"><span>YOUR CLASSIFICATION:</span><strong>${classification}</strong></div>`;
+    const aiConfidence = Math.max(currentCase.healthy, currentCase.diseased);
+    document.getElementById("classifier-ai-lock").classList.add("hidden");
+    document.getElementById("classifier-ai-panel").classList.remove("hidden");
+    nearestPanel.innerHTML = `<div class="nearest-title">YOU vs FIELDWISE:</div>
+        <div class="nearest-row"><span>YOUR CLASSIFICATION:</span><strong>${classification} ${correct ? "✓" : "✕"}</strong></div>
+        <div class="nearest-row prediction-row"><span>FIELDWISE (${aiConfidence}% CONFIDENT):</span><strong>${currentCase.prediction} ${modelCorrect ? "✓" : "✕"}</strong></div>
+        ${modelCorrect ? "" : `<div class="ai-warning">⚠ AI PREDICTION ≠ TRUTH: FIELDWISE said ${currentCase.prediction} at ${aiConfidence}% confidence, but the sample is ${currentCase.actual}.</div>`}`;
     nearestPanel.classList.remove("hidden");
     nextButton.textContent = classifierRound >= CLASSIFIER_ROUNDS ? "VIEW RESULTS →" : "NEXT SAMPLE →";
     nextButton.classList.remove("hidden");
@@ -1015,6 +1021,8 @@ function startModelBreakerCase() {
 
 function buildModelComparison(label, model) {
     const gap = model.training - model.testing;
+    const dropClass = gap >= 15 ? "drop-big" : gap <= 10 ? "drop-small" : "drop-mid";
+    const dropLabel = gap >= 15 ? "▼ BIG DROP" : gap <= 10 ? "▼ SMALL DROP" : "▼ DROP";
     return `
         <div class="model-comparison-column">
             <strong>🌾 MODEL ${label}</strong>
@@ -1022,7 +1030,8 @@ function buildModelComparison(label, model) {
             <div class="model-meter"><i style="width: ${model.training}%"></i></div>
             <span>NEW FIELD DATA <b>${model.testing}%</b></span>
             <div class="model-meter new-field-meter"><i style="width: ${model.testing}%"></i></div>
-            <small>PERFORMANCE GAP: ${gap} POINTS</small>
+            <div class="model-drop ${dropClass}">${dropLabel}: −${gap} POINTS</div>
+            <div class="model-verdict-tag"></div>
         </div>
     `;
 }
@@ -1046,10 +1055,10 @@ function diagnoseModel(diagnosis) {
         modelBreakerScore += 100;
         playerScore += 100;
         addXP(100);
-        feedback.textContent = `✓ ${diagnosis === "modelA" ? "MODEL A" : "MODEL B"} IS THE BETTER MODEL. ${currentCase.explanation}`;
+        setWhyFeedback(feedback, `✓ ${diagnosis === "modelA" ? "MODEL A" : "MODEL B"} IS THE BETTER MODEL.`, currentCase.explanation);
         feedback.className = "game-message success model-breaker-feedback";
     } else {
-        feedback.textContent = `✕ NOT QUITE. ${currentCase.explanation} A large training-to-new-field drop can mean overfitting.`;
+        setWhyFeedback(feedback, "✕ NOT QUITE.", `${currentCase.explanation} A large training-to-new-field drop can mean overfitting.`);
         feedback.className = "game-message error model-breaker-feedback";
     }
 
@@ -1460,9 +1469,9 @@ function evaluateProbability(confidenceChoice) {
     probabilityBandCounts[confidenceChoice]++;
     document.getElementById("probability-accuracy").textContent = `${Math.round((probabilityCorrectReads / probabilityRound) * 100)}%`;
 
-    feedback.textContent = playerCorrect
-        ? "✓ CORRECT: A larger probability gap means the AI is more confident."
-        : `✕ NOT QUITE: ${probabilityCurrentCase.healthy}% vs ${probabilityCurrentCase.diseased}% is ${probabilityCurrentCase.confidence.toUpperCase()} confidence.`;
+    setWhyFeedback(feedback,
+        playerCorrect ? "✓ CORRECT." : `✕ NOT QUITE. THE MODEL'S CONFIDENCE HERE IS ${probabilityCurrentCase.confidence.toUpperCase()}.`,
+        `${probabilityCurrentCase.healthy}% vs ${probabilityCurrentCase.diseased}% is ${probabilityCurrentCase.confidence.toUpperCase()} confidence. A larger probability gap means the model is more confident. Confidence is not the same as being right.`);
     feedback.className = playerCorrect ? "game-message success probability-feedback" : "game-message error probability-feedback";
     nextButton.classList.remove("hidden");
 
@@ -1498,7 +1507,7 @@ function completeProbabilityLevel() {
     document.getElementById("probability-calibration").textContent = `${probabilityBandCounts.high} / ${probabilityBandCounts.medium} / ${probabilityBandCounts.low}`;
 
     document.getElementById("probability-completion-message").textContent = accuracy >= 80
-        ? "Confidence is not certainty. A wider probability gap means the model feels more sure."
+        ? "Confidence is not certainty. A wider probability gap means the model is more confident, but a confident model can still be wrong."
         : "Keep reading the gap between the two probabilities. Close scores mean more uncertainty.";
 
     showScreen("probability-complete");
@@ -1548,7 +1557,7 @@ function loadFarmOptimizerRound() {
     runButton.onclick = submitFarmAllocation;
     document.getElementById("opt-warning").textContent = "ADJUST THE RESOURCES, THEN GROW THE CROP.";
     document.getElementById("opt-warning").className = "optimizer-warning";
-    document.getElementById("optimizer-feedback").textContent = "FIND A STRONG YIELD WITHOUT WASTING RESOURCES";
+    document.getElementById("optimizer-feedback").textContent = "YOU CANNOT MAX EVERYTHING. FIND THE BALANCE.";
     document.getElementById("optimizer-feedback").className = "game-message";
     updateFarmYield();
 }
@@ -1575,6 +1584,23 @@ function updateFarmYield() {
     document.getElementById("farm-use-value").textContent = `${totalUse} / 20`;
     document.getElementById("opt-energy-bar").style.width = `${yieldValue}%`;
     document.getElementById("opt-output-bar").style.width = `${Math.min(100, (totalUse / 20) * 100)}%`;
+    const warn = document.getElementById("opt-warning");
+    if (warn && !farmOptimizerLocked) {
+        const atMax = ["farm-water", "farm-fertilizer", "farm-workers"].some(id => {
+            const el = document.getElementById(id);
+            return Number(el.value) >= Number(el.max);
+        });
+        if (totalUse > 15) {
+            warn.textContent = "⚠ YOU CANNOT MAX EVERYTHING. Past 15 total units, every extra unit lowers the yield: you pushed one input too far and damaged the result.";
+            warn.className = "optimizer-warning warn-active";
+        } else if (atMax) {
+            warn.textContent = "One resource is at its limit. Check what happens to the yield before adding more.";
+            warn.className = "optimizer-warning";
+        } else {
+            warn.textContent = "ADJUST THE RESOURCES, THEN GROW THE CROP.";
+            warn.className = "optimizer-warning";
+        }
+    }
 }
 
 function submitFarmAllocation() {
@@ -2112,8 +2138,10 @@ function retrainBiasModel() {
         message.className = "game-message error";
     }
 
+    const samplesAdded = round.groups.reduce((sum, g) => sum + (biasCounts[g.key] - biasBaseCounts[g.key]), 0);
     document.getElementById("bias-concept").innerHTML =
-        `<strong>WHAT JUST HAPPENED</strong><p>${round.lesson}</p>`;
+        `<strong>WHAT JUST HAPPENED</strong><p>${round.lesson}</p>
+         <p class="bias-caution"><b>DATA ADDED: +${samplesAdded} SAMPLES.</b> ${balanced ? "Representation improved. " : ""}⚠ But adding data to one group does not automatically make the whole model fair. Check every group, and ask who else might be missing.</p>`;
 
     document.getElementById("bias-retrain").disabled = true;
     document.getElementById("bias-retrain").textContent = "MODEL RETRAINED";
@@ -2178,7 +2206,7 @@ function finalMoney(amount) {
 function finalThresholdOutcome(threshold) {
     let falseAlarms = 0;
     let missed = 0;
-    FINAL_THRESHOLD_FIELDS.forEach(field => {
+    getFinalFields().forEach(field => {
         const alert = field.p >= threshold;
         if (alert && !field.diseased) falseAlarms++;
         if (!alert && field.diseased) missed++;
@@ -2209,7 +2237,8 @@ function finalThresholdBest() {
 }
 
 function buildFinalThresholdContent() {
-    return `<strong>LAST SEASON'S RESULTS (OUTCOMES KNOWN)</strong>
+    return `<div id="final-carryover" class="final-carryover"></div>
+        <strong>LAST SEASON'S RESULTS (OUTCOMES KNOWN)</strong>
         <div class="final-sample-list" id="final-threshold-list"></div>
         <label class="final-threshold-control" for="final-threshold-slider">
             <span>SEND AN ALERT IF DISEASE PROBABILITY \u2265 <strong id="final-threshold-value">50</strong>%</span>
@@ -2226,11 +2255,12 @@ function updateFinalThreshold() {
     const threshold = Number(slider.value);
     document.getElementById("final-threshold-value").textContent = threshold;
 
-    document.getElementById("final-threshold-list").innerHTML = FINAL_THRESHOLD_FIELDS.map(field => {
+    document.getElementById("final-carryover").innerHTML = finalCarryoverHTML();
+    document.getElementById("final-threshold-list").innerHTML = getFinalFields().map(field => {
         const alert = field.p >= threshold;
         const wrong = (alert && !field.diseased) || (!alert && field.diseased);
         return `<div class="final-sample-row final-threshold-row ${wrong ? "wrong" : ""}">
-            <span>${field.name} \u00B7 ${field.p}%</span>
+            <span>${field.name}${field.rainy ? " 🌧️" : ""} \u00B7 ${field.p}%</span>
             <b>${field.diseased ? "\uD83E\uDDA0 DISEASED" : "\uD83C\uDF3E HEALTHY"} \u2192 ${alert ? "\uD83D\uDEA8 ALERT" : "NO ALERT"} ${wrong ? "\u2715" : "\u2713"}</b>
         </div>`;
     }).join("");
@@ -2284,6 +2314,7 @@ let finalStage = 1;
 let finalScore = 0;
 let finalCorrect = 0;
 let finalLocked = false;
+let finalResults = {};
 
 const finalStages = [
     {
@@ -2302,10 +2333,10 @@ const finalStages = [
     },
     {
         label: "STAGE 3 // CLASSIFY",
-        content: `<strong>🌱 NEW FIELD SAMPLE</strong><div class="final-sample-list"><div class="final-sample-row"><span>FEATURES</span><b>Moisture 43% · Temp 34°C · Humidity 61% · Leaf spots YES</b></div><div class="final-sample-row"><span>🤖 AI PREDICTION</span><b>DISEASED · CONFIDENCE 82%</b></div></div>`,
-        prompt: "WHAT IS THE AI PREDICTING?",
+        content: `<strong>🌱 NEW FIELD SAMPLE</strong><div class="final-sample-list"><div class="final-sample-row"><span>FEATURES</span><b>Moisture 43% · Temp 34°C · Humidity 61% · Leaf spots YES</b></div></div>`,
+        prompt: "WHAT IS YOUR CLASSIFICATION? FIELDWISE WILL SHOW ITS OWN PREDICTION AFTER YOU DECIDE.",
         options: [{ text: "HEALTHY", value: "healthy" }, { text: "DISEASED", value: "diseased" }], answer: "diseased",
-        reason: "The classifier places this new crop observation in the DISEASED category."
+        reason: "Leaf spots are the strongest signal. FIELDWISE also predicted DISEASED at 82% confidence, but a prediction is not the truth, so you checked it yourself."
     },
     {
         label: "STAGE 4 // CHECK CONFIDENCE",
@@ -2351,6 +2382,7 @@ function startFinalTest() {
     finalStage = 1;
     finalScore = 0;
     finalCorrect = 0;
+    finalResults = {};
     showScreen("final-test");
     loadFinalStage();
 }
@@ -2381,6 +2413,7 @@ function answerFinalStage(value) {
         return;
     }
     const correct = value === stage.answer;
+    finalResults[finalStage] = correct;
     document.querySelectorAll(".final-choice").forEach(button => {
         button.disabled = true;
         button.classList.toggle("selected", button.dataset.value === value);
@@ -2390,12 +2423,12 @@ function answerFinalStage(value) {
         finalScore += 100;
         playerScore += 100;
         addXP(50);
-        document.getElementById("final-stage-feedback").textContent = `✓ CORRECT: ${stage.reason}`;
+        setWhyFeedback(document.getElementById("final-stage-feedback"), "✓ CORRECT.", stage.reason);
         document.getElementById("final-stage-feedback").className = "game-message success final-feedback";
     } else {
         finalScore += 25;
         playerScore += 25;
-        document.getElementById("final-stage-feedback").textContent = `✕ NOT QUITE: ${stage.reason}`;
+        setWhyFeedback(document.getElementById("final-stage-feedback"), "✕ NOT QUITE. THIS WILL AFFECT THE FINAL ALERT.", stage.reason);
         document.getElementById("final-stage-feedback").className = "game-message error final-feedback";
     }
     document.getElementById("final-score").textContent = finalScore;
@@ -2430,3 +2463,437 @@ function completeFinalTest() {
    ========================================================= */
 
 updatePlayerDisplay();
+
+
+/* =========================================================
+   POLISH PASS
+   Progressive unlocking, concept cards, WHY? explainers,
+   consequence-driven final test, endings, achievements,
+   rank titles, field status, training report, persistence.
+   ========================================================= */
+
+const SAVE_KEY = "fieldwise-save-v1";
+const completedLevels = {};
+const trainingStats = {};
+let lastFinalOutcome = null;
+let farmOverUse = 0;
+
+const RANKS = ["TRAINEE", "FIELD ASSISTANT", "DATA TECHNICIAN", "AI FIELD ANALYST", "SMART FARM SPECIALIST"];
+function rankTitle(level) {
+    return RANKS[Math.min(Math.max(level, 1), RANKS.length) - 1];
+}
+
+const FIELD_STATUS = [
+    "MONITORING", "ANOMALY DETECTED", "DATA CLEANING", "CLASSIFYING CROPS", "CONFIDENCE CHECK",
+    "MODEL VALIDATED", "RESOURCES OPTIMIZED", "REPRESENTATION CHECK", "ALERT SYSTEM READY"
+];
+
+const LEVEL_STARTERS = {
+    1: () => startPatternHunter(), 2: () => startDataBuilder(), 3: () => startClassifier(), 4: () => startProbabilityLevel(),
+    5: () => startModelBreaker(), 6: () => startFarmOptimizer(), 7: () => startBiasLab(), 8: () => startFinalTest()
+};
+
+const LEVEL_CONCEPTS = {
+    2: { screen: "data-builder-complete", icon: "🧹", name: "DATA CLEANING", text: "AI learns from its training examples. Bad, duplicated, missing, or incorrectly labeled data can make the model learn the wrong thing." },
+    3: { screen: "classifier-complete", icon: "🌾", name: "CLASSIFICATION", text: "A classifier uses features to place new examples into categories. Its prediction is a guess, not the truth, so people still need to check it." },
+    4: { screen: "probability-complete", icon: "🎯", name: "MODEL CONFIDENCE", text: "A model shows how sure it is with probabilities. Confidence affects decisions, but confidence does not guarantee correctness." },
+    5: { screen: "model-breaker-complete", icon: "🧠", name: "GENERALIZATION", text: "A good model works on data it has never seen. High training accuracy with poor new-field accuracy is a warning sign called overfitting." },
+    6: { screen: "optimizer-complete", icon: "⚙️", name: "OPTIMIZATION", text: "Optimization finds the best balance within limits. You cannot max everything: pushing one input too far can damage the result." },
+    7: { screen: "bias-lab-complete", icon: "⚖️", name: "BIAS AND REPRESENTATION", text: "An AI learns what its data shows, so groups that are underrepresented get worse results. Adding data to one group does not automatically make the whole model fair." },
+    8: { screen: "final-test-complete", icon: "🚨", name: "RESPONSIBLE DEPLOYMENT", text: "An AI system is only as trustworthy as its weakest stage, and its mistakes have costs. AI assists people. It does not replace judgment." }
+};
+
+const EXTRA_ACHIEVEMENTS = [
+    { id: "clean-data", icon: "🧹", name: "CLEAN DATA", text: "Finish Data Harvest without leaving a label error." },
+    { id: "crop-expert", icon: "🌾", name: "CROP EXPERT", text: "Classify every sample correctly." },
+    { id: "calibrated", icon: "🎯", name: "CALIBRATED", text: "Get every confidence reading correct." },
+    { id: "actually-learned", icon: "🧠", name: "ACTUALLY LEARNED", text: "Choose the model that generalizes every time." },
+    { id: "perfect-balance", icon: "⚖️", name: "PERFECT BALANCE", text: "Hit every Farm Optimizer target without overusing resources." },
+    { id: "fair-fix", icon: "🛠️", name: "FAIR FIX", text: "Successfully repair every Bias Lab round." },
+    { id: "responsible-ai", icon: "🚨", name: "RESPONSIBLE AI", text: "Finish the Final Test with an alert cost of ₱12,000 or less." },
+    { id: "fieldwise-certified", icon: "🌟", name: "FIELDWISE CERTIFIED", text: "Complete all 8 levels of the training program." }
+];
+EXTRA_ACHIEVEMENTS.forEach(a => { ACHIEVEMENT_NAMES[a.id] = a.name; });
+
+/* ---------- toasts ---------- */
+function showToast(message) {
+    const toast = document.createElement("div");
+    toast.className = "achievement-toast";
+    toast.textContent = message;
+    document.body.appendChild(toast);
+    setTimeout(() => toast.remove(), 3200);
+}
+
+/* ---------- hooks (wrap existing functions without rewriting them) ---------- */
+function hookAfter(name, after) {
+    const original = window[name];
+    window[name] = function () {
+        const result = original.apply(this, arguments);
+        try { after.apply(this, arguments); } catch (error) { console.error(name, error); }
+        return result;
+    };
+}
+
+/* ---------- WHY? explainer ---------- */
+function setWhyFeedback(el, verdict, reason) {
+    el.textContent = verdict + " ";
+    if (!reason) return;
+    const button = document.createElement("button");
+    button.type = "button";
+    button.className = "why-button";
+    button.textContent = "WHY?";
+    const box = document.createElement("div");
+    box.className = "why-text hidden";
+    box.textContent = reason;
+    button.onclick = () => {
+        box.classList.toggle("hidden");
+        button.classList.toggle("open");
+    };
+    el.appendChild(button);
+    el.appendChild(box);
+}
+
+/* ---------- persistence ---------- */
+function saveProgress() {
+    try {
+        localStorage.setItem(SAVE_KEY, JSON.stringify({
+            playerXP, playerScore, playerLevel,
+            achievements: achievementsUnlocked,
+            completedLevels, trainingStats, lastFinalOutcome
+        }));
+    } catch (error) { /* storage unavailable: progress simply is not saved */ }
+}
+
+function loadProgress() {
+    try {
+        const raw = localStorage.getItem(SAVE_KEY);
+        if (!raw) return;
+        const data = JSON.parse(raw);
+        playerXP = Number(data.playerXP) || 0;
+        playerScore = Number(data.playerScore) || 0;
+        playerLevel = Math.floor(playerXP / 500) + 1;
+        Object.assign(achievementsUnlocked, data.achievements || {});
+        Object.assign(completedLevels, data.completedLevels || {});
+        Object.assign(trainingStats, data.trainingStats || {});
+        lastFinalOutcome = data.lastFinalOutcome || null;
+    } catch (error) { /* corrupted save: start fresh */ }
+}
+
+function resetProgress() {
+    if (!confirm("Reset all training data? XP, level, achievements, and completed levels will be erased.")) return;
+    try { localStorage.removeItem(SAVE_KEY); } catch (error) { /* ignore */ }
+    location.reload();
+}
+
+/* ---------- achievements ---------- */
+function buildExtraAchievements() {
+    const grid = document.querySelector(".achievement-grid");
+    if (!grid) return;
+    EXTRA_ACHIEVEMENTS.forEach(a => {
+        if (grid.querySelector(`[data-achievement="${a.id}"]`)) return;
+        const card = document.createElement("div");
+        card.className = "achievement-card locked-achievement";
+        card.dataset.achievement = a.id;
+        card.innerHTML = `<div class="achievement-icon">${a.icon}</div><div><h3>${a.name}</h3><p>${a.text}</p></div>`;
+        grid.appendChild(card);
+    });
+}
+
+function applySavedAchievements() {
+    Object.keys(achievementsUnlocked).forEach(id => {
+        const card = document.querySelector(`[data-achievement="${id}"]`);
+        if (card) {
+            card.classList.remove("locked-achievement");
+            card.classList.add("unlocked-achievement");
+        }
+    });
+}
+
+hookAfter("unlockAchievement", saveProgress);
+
+/* ---------- XP, rank titles, field status ---------- */
+function furthestLevel() {
+    let n = 0;
+    while (completedLevels[n + 1]) n++;
+    return n;
+}
+
+hookAfter("updatePlayerDisplay", () => {
+    const rank = document.getElementById("player-rank");
+    if (rank) rank.textContent = rankTitle(playerLevel);
+    const status = document.getElementById("field-status-text");
+    if (status) status.textContent = FIELD_STATUS[furthestLevel()] || FIELD_STATUS[0];
+});
+
+(function wrapAddXP() {
+    const original = window.addXP;
+    window.addXP = function (amount) {
+        const before = playerLevel;
+        original.call(this, amount);
+        if (playerLevel > before) showToast(`RANK UP: ${rankTitle(playerLevel)}`);
+        saveProgress();
+    };
+})();
+
+/* ---------- progressive unlocking ---------- */
+function isLevelUnlocked(n) {
+    return n === 1 || !!completedLevels[n - 1];
+}
+
+function openLevel(n) {
+    if (!isLevelUnlocked(n)) {
+        showToast(`COMPLETE LEVEL ${String(n - 1).padStart(2, "0")} FIRST`);
+        return;
+    }
+    LEVEL_STARTERS[n]();
+}
+
+function renderLevelSelect() {
+    document.querySelectorAll("#level-select .level-card").forEach(card => {
+        const n = Number(card.dataset.level);
+        const done = !!completedLevels[n];
+        const open = isLevelUnlocked(n);
+        card.classList.toggle("completed", done);
+        card.classList.toggle("unlocked", open);
+        card.classList.toggle("locked", !open);
+        const status = card.querySelector(".level-status");
+        if (status) status.textContent = done ? "✓ COMPLETED · ↻ REPLAY" : open ? "▶ UNLOCKED" : "🔒 COMPLETE PREVIOUS LEVEL";
+    });
+}
+
+hookAfter("showLevels", renderLevelSelect);
+
+function injectConceptCard(n) {
+    const concept = LEVEL_CONCEPTS[n];
+    if (!concept) return;
+    const section = document.getElementById(concept.screen);
+    if (!section) return;
+    section.querySelectorAll(".concept-unlocked").forEach(el => el.remove());
+    const card = document.createElement("div");
+    card.className = "field-concept concept-unlocked";
+    card.innerHTML = `<strong>${concept.icon} AI CONCEPT UNLOCKED: ${concept.name}</strong><span>${concept.text}</span>`;
+    const buttons = section.querySelector(".completion-buttons");
+    if (buttons) buttons.parentNode.insertBefore(card, buttons);
+}
+
+function markLevelComplete(n) {
+    completedLevels[n] = true;
+    injectConceptCard(n);
+    if (Object.keys(completedLevels).length >= 8 && [1, 2, 3, 4, 5, 6, 7, 8].every(l => completedLevels[l])) {
+        unlockAchievement("fieldwise-certified");
+    }
+    updatePlayerDisplay();
+    saveProgress();
+}
+
+hookAfter("completePatternHunter", () => {
+    trainingStats.anomaly = `${correctAnswers}/${TOTAL_ROUNDS}`;
+    markLevelComplete(1);
+});
+hookAfter("completeDataBuilder", () => {
+    trainingStats.data = `${dataBuilderState.health}%`;
+    if (dataBuilderState.labelErrors === 0) unlockAchievement("clean-data");
+    markLevelComplete(2);
+});
+hookAfter("completeClassifier", () => {
+    trainingStats.classification = `${classifierCorrectAnswers}/${CLASSIFIER_ROUNDS}`;
+    if (classifierCorrectAnswers === CLASSIFIER_ROUNDS) unlockAchievement("crop-expert");
+    markLevelComplete(3);
+});
+hookAfter("completeProbabilityLevel", () => {
+    trainingStats.confidence = `${probabilityCorrectReads}/${PROBABILITY_TOTAL_ROUNDS}`;
+    if (probabilityCorrectReads === PROBABILITY_TOTAL_ROUNDS) unlockAchievement("calibrated");
+    markLevelComplete(4);
+});
+hookAfter("completeModelBreaker", () => {
+    trainingStats.generalization = `${modelBreakerCorrect}/${MODEL_BREAKER_TOTAL_CASES}`;
+    if (modelBreakerCorrect === MODEL_BREAKER_TOTAL_CASES) unlockAchievement("actually-learned");
+    markLevelComplete(5);
+});
+hookAfter("completeFarmOptimizer", () => {
+    trainingStats.optimization = `${farmOptimizerSuccessful}/${FARM_OPTIMIZER_ROUNDS.length} targets`;
+    if (farmOptimizerSuccessful === FARM_OPTIMIZER_ROUNDS.length && farmOverUse === 0) unlockAchievement("perfect-balance");
+    markLevelComplete(6);
+});
+hookAfter("completeBiasLab", () => {
+    trainingStats.bias = `${biasCorrect}/${BIAS_ROUNDS.length}`;
+    if (biasCorrect === BIAS_ROUNDS.length) unlockAchievement("fair-fix");
+    markLevelComplete(7);
+});
+
+/* ---------- Level 5: reveal the word only after the answer ---------- */
+hookAfter("diagnoseModel", () => {
+    const currentCase = modelBreakerRoundCases[modelBreakerRound - 1];
+    const tags = document.querySelectorAll("#model-breaker-case .model-verdict-tag");
+    [currentCase.modelA, currentCase.modelB].forEach((model, i) => {
+        const gap = model.training - model.testing;
+        if (!tags[i]) return;
+        tags[i].textContent = gap >= 15 ? "🚨 OVERFITTING" : gap <= 10 ? "✓ GENERALIZES WELL" : "⚠ SOME DROP";
+        tags[i].className = `model-verdict-tag ${gap >= 15 ? "bad" : gap <= 10 ? "good" : "mid"}`;
+    });
+});
+
+/* ---------- Level 6: track overuse ---------- */
+hookAfter("startFarmOptimizer", () => { farmOverUse = 0; });
+(function wrapSubmitFarm() {
+    const original = window.submitFarmAllocation;
+    window.submitFarmAllocation = function () {
+        if (!farmOptimizerLocked) {
+            const total = ["farm-water", "farm-fertilizer", "farm-workers"]
+                .reduce((sum, id) => sum + Number(document.getElementById(id).value), 0);
+            if (total > 15) farmOverUse++;
+        }
+        return original.apply(this, arguments);
+    };
+})();
+
+/* ---------- Level 8: the boss fight (earlier decisions change the data) ---------- */
+const FINAL_RAINY_FIELDS = [4, 6, 8];
+
+function getFinalFields() {
+    const r = finalResults;
+    return FINAL_THRESHOLD_FIELDS.map((field, i) => {
+        let p = field.p;
+        if (r[1] === false || r[2] === false) p += i % 2 === 0 ? -12 : 12;
+        if (r[6] === false) p = Math.round(p * 0.7 + 15);
+        if (r[7] === false && FINAL_RAINY_FIELDS.includes(i)) p -= 15;
+        return { ...field, p: Math.max(1, Math.min(99, p)), rainy: FINAL_RAINY_FIELDS.includes(i) };
+    });
+}
+
+function finalCarryoverHTML() {
+    const r = finalResults;
+    const notes = [];
+    if (r[1] === false || r[2] === false) notes.push("🧹 Bad data reached training, so the model's probabilities are noisy.");
+    if (r[6] === false) notes.push("🧪 You picked the model that did not generalize, so its predictions on new fields are less reliable.");
+    if (r[7] === false) notes.push("⚖️ Rainy fields stayed underrepresented, so the model underestimates disease there (🌧️).");
+    if (!notes.length) return "<strong>✓ CLEAN PIPELINE</strong><span>Clean data, a model that generalizes, and balanced fields. The probabilities below are as good as they can be.</span>";
+    return `<strong>YOUR EARLIER DECISIONS CARRIED OVER</strong>${notes.map(n => `<span>${n}</span>`).join("")}`;
+}
+
+function finalFarmOutcome() {
+    let diseased = 0, detected = 0, falseAlarms = 0;
+    getFinalFields().forEach(field => {
+        const alert = field.p >= finalAlertThreshold;
+        if (field.diseased) { diseased++; if (alert) detected++; }
+        else if (alert) falseAlarms++;
+    });
+    const missed = diseased - detected;
+    const cost = falseAlarms * FINAL_COST_FALSE_ALARM + missed * FINAL_COST_MISSED;
+    const best = finalThresholdBest().minCost;
+    const tier = finalCorrect >= 7 && cost <= best + FINAL_COST_FALSE_ALARM ? "excellent"
+        : finalCorrect <= 4 || missed >= 3 ? "poor" : "mixed";
+    return { tier, diseased, detected, falseAlarms, missed, cost, correct: finalCorrect, detectedPct: Math.round((detected / diseased) * 100) };
+}
+
+hookAfter("completeFinalTest", () => {
+    const outcome = finalFarmOutcome();
+    lastFinalOutcome = outcome;
+    trainingStats.final = `${outcome.correct}/${FINAL_TEST_TOTAL_STAGES} · ${finalMoney(outcome.cost)}`;
+
+    const map = [[1], [1], [2], [3], [4, 5], [6], [7]];
+    const okText = ["CHECKED", "PREPARED", "VERIFIED", "CLASSIFIED", "CHECKED", "PASSED", "INVESTIGATED"];
+    document.querySelectorAll("#final-test-complete .final-pipeline-summary > div").forEach((row, i) => {
+        const strong = row.querySelector("strong");
+        if (!strong || !map[i]) return;
+        const ok = map[i].every(stage => finalResults[stage] === true);
+        strong.textContent = ok ? `✓ ${okText[i]}` : "✕ NEEDS WORK";
+        strong.style.color = ok ? "" : "var(--danger)";
+    });
+
+    const reliability = { excellent: "HIGH", mixed: "MEDIUM", poor: "LOW" }[outcome.tier];
+    const titles = { excellent: "FIELD ALERT READY", mixed: "ALERT NEEDS HUMAN REVIEW", poor: "ALERT NOT SAFE TO TRUST YET" };
+    const title = document.querySelector("#final-test-complete .completion-title");
+    if (title) title.textContent = titles[outcome.tier];
+
+    const panel = document.getElementById("final-farm-outcome");
+    if (panel) {
+        panel.innerHTML = `<strong>🌾 FARM OUTCOME</strong>
+            <div class="final-sample-row"><span>DISEASE CASES DETECTED</span><b>${outcome.detectedPct}% (${outcome.detected} of ${outcome.diseased})</b></div>
+            <div class="final-sample-row"><span>UNNECESSARY ALERTS</span><b>${outcome.falseAlarms}</b></div>
+            <div class="final-sample-row"><span>MISSED DISEASE</span><b>${outcome.missed}</b></div>
+            <div class="final-sample-row"><span>ESTIMATED SIMULATED COST</span><b>${finalMoney(outcome.cost)}</b></div>
+            <div class="final-sample-row"><span>MODEL RELIABILITY</span><b class="reliability-${outcome.tier}">${reliability}</b></div>`;
+    }
+
+    const bonusXP = Math.round((finalCorrect / FINAL_TEST_TOTAL_STAGES) * 100) >= 90 ? 500 : Math.round((finalCorrect / FINAL_TEST_TOTAL_STAGES) * 100) >= 70 ? 350 : 200;
+    const messages = {
+        excellent: `${finalCorrect} / ${FINAL_TEST_TOTAL_STAGES} pipeline decisions correct. Clean data, a model that generalizes, balanced fields, and a sensible alert rule made FIELDWISE a reliable early-warning system. +${bonusXP} XP earned.`,
+        mixed: `${finalCorrect} / ${FINAL_TEST_TOTAL_STAGES} pipeline decisions correct. FIELDWISE helped, but mistakes earlier in the pipeline reached the alert stage, so several alerts still need human review. +${bonusXP} XP earned.`,
+        poor: `${finalCorrect} / ${FINAL_TEST_TOTAL_STAGES} pipeline decisions correct. FIELDWISE made decisions too quickly, and the early mistakes piled up into costly alerts. The farmers learned that an AI should never be trusted blindly. +${bonusXP} XP earned.`
+    };
+    document.getElementById("final-completion-message").textContent = messages[outcome.tier];
+
+    if (outcome.cost <= 12000) unlockAchievement("responsible-ai");
+    markLevelComplete(8);
+});
+
+/* ---------- endings ---------- */
+const EPILOGUES = {
+    excellent: {
+        label: "🌟 EXCELLENT ENDING",
+        text: [
+            "A season later, Juan's sensors flag a sick patch in one corner of his field within a day. He sprays only that corner instead of the whole plot, and most of his harvest is saved.",
+            "Aling Rosa's rainy-season alerts now come true far more often, because her wet fields are finally part of the data. Mang Tonyo's mature corn gets the same attention.",
+            "FIELDWISE became a reliable early-warning system. It did not replace what they know about their land. It gave them a warning they could check against their own eyes, and it worked for all three because someone checked that the data included everyone."
+        ],
+        farmers: ["CATCHES PROBLEMS EARLY, SPRAYS ONLY WHERE NEEDED", "GETS RELIABLE ADVICE IN THE RAINY SEASON", "HIS MATURE CORN IS NO LONGER OVERLOOKED"],
+        moral: "Good AI starts with good data. But good AI also needs people who know when not to trust it."
+    },
+    mixed: {
+        label: "⚠️ MIXED ENDING",
+        text: [
+            "A season later, FIELDWISE flags most of the sick patches on Juan's field early, and he saves a good part of his harvest. But several alerts turn out to be false alarms, and one patch is missed.",
+            "Aling Rosa's rainy-season advice is better than before, but still uneven. Mang Tonyo's corn is sometimes overlooked.",
+            "FIELDWISE helped, but its alerts still needed a person to review them. The team keeps checking the data, and the farmers keep checking their fields."
+        ],
+        farmers: ["CATCHES MOST PROBLEMS, CHECKS ALERTS BY EYE", "BETTER ADVICE, BUT STILL UNEVEN", "SOMETIMES STILL OVERLOOKED"],
+        moral: "A useful AI still needs people checking what it says."
+    },
+    poor: {
+        label: "🚨 HARD LESSON ENDING",
+        text: [
+            "FIELDWISE went live quickly, and its alerts arrived faster than anyone could check them. Juan sprayed fields that were fine and missed a patch that spread.",
+            "Aling Rosa's rainy-season alerts kept being wrong, and Mang Tonyo stopped trusting the system.",
+            "The farmers learned that an AI should never be trusted blindly. The team went back to the data, and this time they checked every group before going live."
+        ],
+        farmers: ["WASTED SPRAY AND MISSED A SICK PATCH", "KEPT GETTING WRONG ADVICE", "STOPPED TRUSTING THE ALERTS"],
+        moral: "AI assists people. It does not replace judgment."
+    }
+};
+
+window.showEpilogue = function () {
+    const tier = (lastFinalOutcome && lastFinalOutcome.tier) || "mixed";
+    const ending = EPILOGUES[tier];
+    document.getElementById("epilogue-label").textContent = `FIELDWISE // EPILOGUE // ${ending.label}`;
+    document.getElementById("epilogue-text").innerHTML = ending.text.map(line => `<p>${line}</p>`).join("");
+    const names = ["👨‍🌾 JUAN", "👩‍🌾 ALING ROSA", "🧓 MANG TONYO"];
+    document.getElementById("epilogue-farmers").innerHTML = names.map((name, i) => `<div>${name} <strong>${ending.farmers[i]}</strong></div>`).join("");
+    document.getElementById("epilogue-moral").textContent = ending.moral;
+    showScreen("epilogue");
+};
+
+/* ---------- training report ---------- */
+function showTrainingReport() {
+    const s = trainingStats;
+    const rows = [
+        ["ANOMALY DETECTION", s.anomaly], ["DATA QUALITY", s.data], ["CLASSIFICATION", s.classification],
+        ["CONFIDENCE", s.confidence], ["GENERALIZATION", s.generalization], ["OPTIMIZATION", s.optimization],
+        ["BIAS INVESTIGATION", s.bias], ["FINAL TEST", s.final]
+    ];
+    document.getElementById("report-rows").innerHTML = rows
+        .map(([skill, value]) => `<div class="result-row"><span>${skill}</span><strong>${value || "NOT YET"}</strong></div>`).join("");
+    const certified = [1, 2, 3, 4, 5, 6, 7, 8].every(l => completedLevels[l]);
+    const reliability = lastFinalOutcome ? { excellent: "HIGH", mixed: "MEDIUM", poor: "LOW" }[lastFinalOutcome.tier] : "NOT TESTED";
+    document.getElementById("report-cert").innerHTML = `<span>🌟 FIELDWISE CERTIFICATION</span>
+        <strong>${certified ? "FIELDWISE CERTIFIED" : "TRAINING IN PROGRESS"}</strong>
+        <small>${rankTitle(playerLevel)} · LEVEL ${playerLevel} · MODEL RELIABILITY: ${reliability}</small>`;
+    showScreen("training-report");
+}
+
+/* ---------- start-up ---------- */
+buildExtraAchievements();
+loadProgress();
+applySavedAchievements();
+updatePlayerDisplay();
+renderLevelSelect();
