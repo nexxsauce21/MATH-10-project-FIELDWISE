@@ -76,6 +76,10 @@ function showScreen(screenId) {
     if (target) {
         target.classList.add("active");
     }
+
+    document.body.classList.remove("screen-wipe");
+    void document.body.offsetWidth;
+    document.body.classList.add("screen-wipe");
 }
 
 
@@ -137,7 +141,7 @@ function updatePlayerDisplay() {
     }
 
     if (xpBarFill) {
-        xpBarFill.style.width = `${percentage}%`;
+        xpBarFill.style.transform = `scaleX(${percentage / 100})`;
     }
 }
 
@@ -2487,6 +2491,7 @@ const FIELD_STATUS = [
     "MONITORING", "ANOMALY DETECTED", "DATA CLEANING", "CLASSIFYING CROPS", "CONFIDENCE CHECK",
     "MODEL VALIDATED", "RESOURCES OPTIMIZED", "REPRESENTATION CHECK", "ALERT SYSTEM READY"
 ];
+let newlyUnlockedLevel = null;
 
 const LEVEL_STARTERS = {
     1: () => startPatternHunter(), 2: () => startDataBuilder(), 3: () => startClassifier(), 4: () => startProbabilityLevel(),
@@ -2623,6 +2628,7 @@ hookAfter("updatePlayerDisplay", () => {
     if (rank) rank.textContent = rankTitle(playerLevel);
     const status = document.getElementById("field-status-text");
     if (status) status.textContent = FIELD_STATUS[furthestLevel()] || FIELD_STATUS[0];
+    updateHomeField();
 });
 
 (function wrapAddXP() {
@@ -2649,6 +2655,12 @@ function openLevel(n) {
 }
 
 function renderLevelSelect() {
+    const map = document.querySelector("#level-select .field-map");
+    if (map && newlyUnlockedLevel !== null) {
+        map.classList.add("path-draw");
+        setTimeout(() => map.classList.remove("path-draw"), 800);
+    }
+
     document.querySelectorAll("#level-select .level-card").forEach(card => {
         const n = Number(card.dataset.level);
         const done = !!completedLevels[n];
@@ -2656,12 +2668,72 @@ function renderLevelSelect() {
         card.classList.toggle("completed", done);
         card.classList.toggle("unlocked", open);
         card.classList.toggle("locked", !open);
+        card.setAttribute("role", "button");
+        card.setAttribute("tabindex", "0");
+        card.setAttribute("aria-disabled", String(!open));
+        card.setAttribute("aria-label", `Level ${n}: ${card.querySelector(".level-name").textContent}. ${done ? "Completed; replay available." : open ? "Unlocked." : `Locked; complete level ${n - 1} first.`}`);
         const status = card.querySelector(".level-status");
         if (status) status.textContent = done ? "✓ COMPLETED · ↻ REPLAY" : open ? "▶ UNLOCKED" : "🔒 COMPLETE PREVIOUS LEVEL";
+        const justUnlocked = n === newlyUnlockedLevel;
+        card.classList.toggle("just-unlocked", justUnlocked);
+        if (justUnlocked) {
+            setTimeout(() => card.classList.remove("just-unlocked"), 900);
+            newlyUnlockedLevel = null;
+        }
     });
+    updateMapProgress();
 }
 
 hookAfter("showLevels", renderLevelSelect);
+
+function updateHomeField() {
+    const scene = document.getElementById("home-field");
+    if (!scene) return;
+    const progress = furthestLevel();
+    for (let level = 0; level <= 8; level++) scene.classList.remove(`field-stage-${level}`);
+    scene.classList.add(`field-stage-${progress}`);
+    const readout = scene.querySelector(".field-readout");
+    if (readout) readout.innerHTML = `LIVE FIELD SCAN · ${progress} / 8 <span>●</span>`;
+}
+
+function updateMapProgress() {
+    const progress = furthestLevel();
+    const label = document.getElementById("map-progress-label");
+    const fill = document.getElementById("map-progress-fill");
+    if (label) label.textContent = `FIELD ${progress} / 8 PLOTS CULTIVATED`;
+    if (fill) fill.style.transform = `scaleX(${progress / 8})`;
+}
+
+function initializeHomepageEffects() {
+    const boot = document.getElementById("model-boot");
+    const menu = document.getElementById("main-menu");
+    if (!boot || !menu) return;
+
+    document.querySelectorAll("#level-select .level-card").forEach(card => {
+        card.addEventListener("keydown", event => {
+            if (event.key === "Enter" || event.key === " ") {
+                event.preventDefault();
+                openLevel(Number(card.dataset.level));
+            }
+        });
+    });
+
+    const message = "INITIALIZING MODEL...";
+    const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    if (reduceMotion) {
+        boot.textContent = "MODEL READY // FIELD SCAN LIVE";
+        menu.classList.add("intro-ready");
+    } else {
+        let typed = 0;
+        const typing = setInterval(() => {
+            boot.textContent = message.slice(0, typed + 1);
+            typed += 1;
+            if (typed >= message.length) clearInterval(typing);
+        }, 48);
+        setTimeout(() => menu.classList.add("intro-ready"), 2000);
+    }
+
+}
 
 function injectConceptCard(n) {
     const concept = LEVEL_CONCEPTS[n];
@@ -2677,6 +2749,7 @@ function injectConceptCard(n) {
 }
 
 function markLevelComplete(n) {
+    if (!completedLevels[n] && !completedLevels[n + 1] && n < 8) newlyUnlockedLevel = n + 1;
     completedLevels[n] = true;
     injectConceptCard(n);
     if (Object.keys(completedLevels).length >= 8 && [1, 2, 3, 4, 5, 6, 7, 8].every(l => completedLevels[l])) {
@@ -2897,3 +2970,4 @@ loadProgress();
 applySavedAchievements();
 updatePlayerDisplay();
 renderLevelSelect();
+initializeHomepageEffects();

@@ -14,12 +14,30 @@
     ========================== -->
     <section id="main-menu" class="screen active">
 
+        <div class="field-scene field-stage-0" id="home-field" aria-hidden="true">
+            <div class="field-sky">
+                <span class="field-cloud cloud-one"></span>
+                <span class="field-cloud cloud-two"></span>
+                <span class="field-sun"></span>
+            </div>
+            <div class="field-hills"></div>
+            <div class="field-crops">
+                <div class="crop-row crop-row-back"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
+                <div class="crop-row crop-row-front"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
+            </div>
+            <div class="scan-sweep"></div>
+            <div class="scan-box scan-box-one"><span>HEALTHY <b>0.94</b></span></div>
+            <div class="scan-box scan-box-two"><span>STRESSED <b>0.61</b></span></div>
+            <div class="field-readout">LIVE FIELD SCAN <span>●</span></div>
+        </div>
+
         <div class="menu-container">
 
             <div class="logo-area">
                 <div class="system-label">[ UPLB SMART FARM // AI SYSTEM ]</div>
-                <h1>FIELDWISE</h1>
+                <h1>FIELD<span>WISE</span></h1>
                 <p>TRAIN THE FARM AI</p>
+                <div class="model-boot" id="model-boot" aria-live="polite"></div>
             </div>
 
             <div class="player-panel">
@@ -207,10 +225,16 @@
                 <div>
                     <div class="system-label">TRAINING DATABASE</div>
                     <h2>SELECT TRAINING</h2>
+                    <p class="map-instruction">FOLLOW THE FIELD PATH · EACH PLOT TEACHES THE NEXT STAGE OF THE MODEL</p>
                 </div>
             </div>
 
-            <div class="level-grid">
+            <div class="map-progress" aria-label="Training field progress">
+                <span id="map-progress-label">FIELD 0 / 8 PLOTS CULTIVATED</span>
+                <div class="map-progress-track"><div id="map-progress-fill"></div></div>
+            </div>
+
+            <div class="level-grid field-map">
 
                 <div class="level-card" data-level="1" onclick="openLevel(1)">
                     <div class="level-number">01</div>
